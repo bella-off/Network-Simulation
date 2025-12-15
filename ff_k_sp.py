@@ -28,7 +28,7 @@ if __name__ == "__main__":
     skip = 0
     count = args.mc
 
-    max_total_graphs = 1  # 最多处理 1 个图
+    max_total_graphs = 1  # Process at most 1 graph
     total_processed = 0
 
 
@@ -60,20 +60,20 @@ if __name__ == "__main__":
                                                                 port=port,
                                                                 hostname=hostname, fibre_num=1)
         
-        # 打印结果
+        # Print results
         print("\n" + "="*60)
         print("Results Summary")
         print("="*60)
         
         route_function = "FF-kSP"
         for graph, _id, T_c in graph_list:
-            # 打印拓扑信息 (Topology Design)
+            # Print topology information (Topology Design)
             print(f"\nTopology ID: {_id}")
             print(f"Number of Nodes: {len(graph.nodes)}")
             print(f"Number of Edges: {len(graph.edges)}")
             print(f"Average Degree: {2*len(graph.edges)/len(graph.nodes):.2f}")
             
-            # 从数据库读取结果
+            # Read results from database
             try:
                 results = list(nt.Database.read_data(db, collection, 
                                                      find_dic={"_id": _id},
@@ -81,7 +81,7 @@ if __name__ == "__main__":
                 if len(results) > 0:
                     result_data = results[0]
                     
-                    # 打印吞吐量结果
+                    # Print throughput results
                     capacity_key = f"{route_function} Capacity"
                     connections_key = f"{route_function}-connections"
                     time_key = f"{route_function} time"
@@ -96,9 +96,9 @@ if __name__ == "__main__":
                     
                     if time_key in result_data:
                         time_taken = result_data[time_key]
-                        print(f"Computation Time: {time_taken:.2f} 秒")
+                        print(f"Computation Time: {time_taken:.2f} seconds")
                     
-                    # 打印其他参数
+                    # Print other parameters
                     if f"{route_function} channel number" in result_data:
                         channels = result_data[f"{route_function} channel number"]
                         print(f"Number of Channels: {channels}")
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         skip += count
 
         # ============================================================
-        # 可视化 RWA 结果（仿照图 3.2）
+        # Visualize RWA results (following Figure 3.2 style)
         # ============================================================
         if f"{route_function} RWA" in result_data:
             rwa_result = result_data[f"{route_function} RWA"]
@@ -133,7 +133,7 @@ if __name__ == "__main__":
                 )
                 print(f"RWA saved: rwa_{route_function}_nsfnet.png")
             except ImportError:
-                print("警告: 无法导入 plot_rwa 模块，跳过可视化")
+                print("Warning: Unable to import plot_rwa module, skipping visualization")
             except Exception as e:
-                print(f"可视化时出错: {e}")
+                print(f"Error during visualization: {e}")
 

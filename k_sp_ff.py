@@ -48,13 +48,13 @@ if __name__ == "__main__":
                                                                hostname=hostname, fibre_num=1)
     route_function = "kSP-FF"
     for graph, _id, T_c in graph_list:
-        # 打印拓扑信息 (Topology Design)
+        # Print topology information (Topology Design)
         print(f"\nTopology ID: {_id}")
         print(f"Number of Nodes: {len(graph.nodes)}")
         print(f"Number of Edges: {len(graph.edges)}")
         print(f"Average Degree: {2 * len(graph.edges) / len(graph.nodes):.2f}")
 
-        # 从数据库读取结果
+        # Read results from database
         try:
             results = list(nt.Database.read_data(db, collection,
                                                  find_dic={"_id": _id},
@@ -62,7 +62,7 @@ if __name__ == "__main__":
             if len(results) > 0:
                 result_data = results[0]
 
-                # 打印吞吐量结果
+                # Print throughput results
                 capacity_key = f"{route_function} Capacity"
                 connections_key = f"{route_function}-connections"
                 time_key = f"{route_function} time"
@@ -79,7 +79,7 @@ if __name__ == "__main__":
                     time_taken = result_data[time_key]
                     print(f"Computation Time: {time_taken:.2f} s")
 
-                # 打印其他参数  kSP-FF RWA
+                # Print other parameters  kSP-FF RWA
                 if f"{route_function} RWA" in result_data:
                     RWA_results = result_data[f"{route_function} RWA"]
                     print(f"RWA: {RWA_results}")
@@ -93,7 +93,7 @@ if __name__ == "__main__":
                     print(f"Channel Bandwidth: {bandwidth / 1e9:.1f} GHz")
 
                 # ============================================================
-                # 可视化 RWA 结果（仿照图 3.2）
+                # Visualize RWA results (following Figure 3.2 style)
                 # ============================================================
                 if f"{route_function} RWA" in result_data:
                     rwa_result = result_data[f"{route_function} RWA"]
@@ -110,9 +110,9 @@ if __name__ == "__main__":
                         )
                         print(f"RWA saved: rwa_{route_function}_nsfnet.png")
                     except ImportError:
-                        print("警告: 无法导入 plot_rwa 模块，跳过可视化")
+                        print("Warning: Unable to import plot_rwa module, skipping visualization")
                     except Exception as e:
-                        print(f"可视化时出错: {e}")
+                        print(f"Error during visualization: {e}")
             else:
                 print(f"\nWarning: No result data found for ID {_id}")
         except Exception as e:
