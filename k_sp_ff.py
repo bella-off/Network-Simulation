@@ -1,9 +1,89 @@
 import NetworkToolkit as nt
 import numpy as np
 
-
-
 if __name__ == "__main__":
+    # ============================================================
+    # Band Selection Configuration
+    # ============================================================
+    # Available bands: "C", "C+L", "SCL", "SCLO"
+    BAND_SELECTION = "C"  # Change this to select different bands
+    
+    # Band configurations (same as ilp_connections.py)
+    BAND_CONFIGS = {
+        "C": {
+            "name": "C band",
+            "wavelength_start_nm": 1530,
+            "wavelength_width_nm": 40.049,
+            "B_o_THz": 5.0,
+            "RefLambda_nm": 1550,
+            "Cr": 0,
+            "channel_bandwidth_GHz": 50,
+            "description": "C band: 1530-1570 nm (40 nm)"
+        },
+        "C+L": {
+            "name": "C+L band",
+            "wavelength_start_nm": 1530,
+            "wavelength_width_nm": 95,
+            "B_o_THz": 11.8,
+            "RefLambda_nm": 1577.5,
+            "Cr": 0.028 / 1e3 / 1e12,
+            "channel_bandwidth_GHz": 50,
+            "description": "C+L band: 1530-1625 nm (95 nm)"
+        },
+        "SCL": {
+            "name": "SCL band (Super C+L)",
+            "wavelength_start_nm": 1460,
+            "wavelength_width_nm": 165,
+            "B_o_THz": 20.86,
+            "RefLambda_nm": 1542.5,
+            "Cr": 0.028 / 1e3 / 1e12,
+            "channel_bandwidth_GHz": 50,
+            "description": "SCL band: 1460-1625 nm (165 nm)"
+        },
+        "SCLO": {
+            "name": "SCLO band (Super C+L+O)",
+            "wavelength_start_nm": 1260,
+            "wavelength_width_nm": 365,
+            "B_o_THz": 46.0,
+            "RefLambda_nm": 1442.5,
+            "Cr": 0.028 / 1e3 / 1e12,
+            "channel_bandwidth_GHz": 50,
+            "description": "SCLO band: 1260-1625 nm (365 nm)"
+        }
+    }
+    
+    # Get selected band configuration
+    if BAND_SELECTION not in BAND_CONFIGS:
+        raise ValueError(f"Invalid band selection: {BAND_SELECTION}. "
+                        f"Available options: {list(BAND_CONFIGS.keys())}")
+    
+    band_config = BAND_CONFIGS[BAND_SELECTION]
+    
+    # Calculate channel bandwidth from band configuration
+    channel_bandwidth = band_config['channel_bandwidth_GHz'] * 1e9  # Convert GHz to Hz
+    
+    # Calculate number of channels based on B_o and channel_bandwidth
+    B_o = band_config['B_o_THz'] * 1e12  # Convert THz to Hz
+    num_channels = int(np.floor(B_o / channel_bandwidth))
+    
+    print("="*60)
+    print(f"Selected Band: {band_config['name']}")
+    print(f"Description: {band_config['description']}")
+    print(f"Wavelength Range: {band_config['wavelength_start_nm']:.1f} - "
+          f"{band_config['wavelength_start_nm'] + band_config['wavelength_width_nm']:.1f} nm")
+    print(f"Total Bandwidth: {band_config['B_o_THz']:.2f} THz")
+    print(f"Channel Bandwidth: {band_config['channel_bandwidth_GHz']:.1f} GHz")
+    print(f"Number of Channels: {num_channels}")
+    print(f"Reference Wavelength: {band_config['RefLambda_nm']:.1f} nm")
+    print("="*60)
+    
+    # ============================================================
+    # Fiber Span Length Configuration
+    # ============================================================
+    span_length_km = 80  # Fiber span length in km (default: 80 km)
+    print(f"Fiber Span Length: {span_length_km} km")
+    print("="*60)
+    
     collection = "topology-paper"
     db = "Topology_Data"
 
@@ -41,11 +121,13 @@ if __name__ == "__main__":
     result = nt.NetworkSimulator.parralel_heuristic_throughput(graph_list, collection=collection, db=db,
                                                                workers=len(graph_list),
                                                                route_function="kSP-FF",
-                                                               e=100, k=5, m_step=200, channel_bandwidth=50e9,
+                                                               e=100, k=5, m_step=200, channel_bandwidth=channel_bandwidth,
                                                                max_count=10,
                                                                m_start=0,
                                                                port=port,
-                                                               hostname=hostname, fibre_num=1)
+                                                               hostname=hostname, fibre_num=1,
+                                                               band_selection=BAND_SELECTION, band_config=band_config,
+                                                               span_length_km=span_length_km)
     route_function = "kSP-FF"
     for graph, _id, T_c in graph_list:
         # Print topology information (Topology Design)
@@ -70,6 +152,7 @@ if __name__ == "__main__":
                 if capacity_key in result_data:
                     throughput = result_data[capacity_key]
                     print(f"\nThroughput: {throughput:.2e} bps ({throughput / 1e12:.4f} Tbps)")
+                print(f"route_function: {route_function} ")
 
                 if connections_key in result_data:
                     connections = result_data[connections_key]
@@ -79,10 +162,10 @@ if __name__ == "__main__":
                     time_taken = result_data[time_key]
                     print(f"Computation Time: {time_taken:.2f} s")
 
-                # Print other parameters  kSP-FF RWA
-                if f"{route_function} RWA" in result_data:
-                    RWA_results = result_data[f"{route_function} RWA"]
-                    print(f"RWA: {RWA_results}")
+                # # Print other parameters  kSP-FF RWA
+                # if f"{route_function} RWA" in result_data:
+                #     RWA_results = result_data[f"{route_function} RWA"]
+                #     print(f"RWA: {RWA_results}")
 
                 if f"{route_function} channel number" in result_data:
                     channels = result_data[f"{route_function} channel number"]
@@ -91,7 +174,6 @@ if __name__ == "__main__":
                 if f"{route_function} channel bandwidth" in result_data:
                     bandwidth = result_data[f"{route_function} channel bandwidth"]
                     print(f"Channel Bandwidth: {bandwidth / 1e9:.1f} GHz")
-
                 # ============================================================
                 # Visualize RWA results (following Figure 3.2 style)
                 # ============================================================

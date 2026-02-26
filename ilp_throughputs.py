@@ -90,9 +90,7 @@ if __name__ == "__main__":
     hostname = "128.40.42.13"
     # hostname = None   # None to use the Ray
     port = 6379
-    # Configuration: Change topology_name to switch between different topologies
-    topology_name = "DTAG"  # Options: "NSFNET", "DTAG", "CONUS", etc.
-    collection = "real" if topology_name == "DTAG" else "topology-paper"  # DTAG is in "real", others in "topology-paper"
+    collection = "topology-paper"
     db = "Topology_Data"
     # port = 7112
     # query = { "nodes" : 14, "ILP Capacity" : { "$exists" : True }, "ILP-connections" : { "$exists" : False }}
@@ -101,21 +99,22 @@ if __name__ == "__main__":
     #                                                 node_data=False, max_count=10000)
     #
 
-    graph_list = nt.Database.read_topology_dataset_list(db, collection, find_dic={"name": topology_name},
+    graph_list = nt.Database.read_topology_dataset_list(db, collection, find_dic={"name": "NSFNET"},
                                                         node_data=True)
 
-    matrix_one = np.ones((len(graph_list[0][0].nodes), len(graph_list[0][0].nodes)))
-    np.fill_diagonal(matrix_one, 0)
-    T_c = (matrix_one / (len(graph_list[0][0].nodes) * (len(graph_list[0][0].nodes) - 1))).tolist()
-    graph_list = [(graph, _id, T_c) for graph,_id in graph_list]
+    # ILP_throughput doesn't need T_c, it uses uniform bandwidth demand
+    # graph_list should be (graph, _id) format, not (graph, _id, T_c)
+    graph_list = [(graph, _id) for graph, _id in graph_list]
 
-    # nt.NetworkSimulator.parralel_ILP_connections(graph_list, db="Topology_Data",collection="topology-paper", max_time=48*3600, workers=len(graph_list),
-    # parralel_ILP_throughput
-    nt.NetworkSimulator.parralel_ILP_connections(graph_list, db=db, collection=collection, max_time=48*3600, workers=len(graph_list),
-                                 threads=4, fibre_num=1, hostname=hostname, port=port,
-                                 insert=False, bandwidth=channel_bandwidth, throughput=True, blocking_rate=0,
-                                 k=1, band_selection=BAND_SELECTION, band_config=band_config,
-                                 span_length_km=span_length_km,node_file_start=0.5,)
+    # Run ILP throughput optimization
+    # Note: ILP_throughput uses channel_bandwidth (not bandwidth), and doesn't accept insert, throughput, blocking_rate
+    nt.NetworkSimulator.parralel_ILP_throughput(graph_list, db="Topology_Data", collection="topology-paper", 
+                                 max_time=48*3600, workers=len(graph_list),
+                                 threads=1, fibre_num=1, hostname=hostname, port=port,
+                                 bandwidth=channel_bandwidth,  # This will be passed as channel_bandwidth to ILP_throughput
+                                 k=1, e=0,
+                                 node_file_start=0.01,
+                                 capacity_constraint=True)
 
     # k=20
 
@@ -128,9 +127,9 @@ if __name__ == "__main__":
     print("Results Summary")
     print("="*60)
 
-    route_function = "ILP-connections"
+    route_function = "ILP-throughput"
 
-    for graph, _id, T_c in graph_list:
+    for graph, _id in graph_list:
         # Print topology information
         print(f"\nTopology ID: {_id}")
         print(f"Number of Nodes: {len(graph.nodes)}")
@@ -183,36 +182,33 @@ if __name__ == "__main__":
                 if f"{route_function} status" in result_data:
                     status = result_data[f"{route_function} status"]
                     print(f"Status: {status}")
+
+                # ============================================================
+                # Visualize RWA results (following Figure 3.2 style)
+                # ============================================================
+                if f"{route_function} RWA" in result_data:
+                    rwa_result = result_data[f"{route_function} RWA"]
+                    print(f"\nprinting RWA heatmap...")
+
+                    try:
+                        from plot_rwa import plot_rwa_heatmap
+
+                        plot_rwa_heatmap(
+                            graph,
+                            rwa_result,
+                            title=f"NSFNET with {route_function} Routing",
+                            save_path=f"rwa_{route_function}_nsfnet.png"
+                        )
+                        print(f"RWA saved: rwa_{route_function}_nsfnet.png")
+                    except ImportError:
+                        print("Warning: Unable to import plot_rwa module, skipping visualization")
+                    except Exception as e:
+                        print(f"Error during visualization: {e}")
             else:
                 print(f"\nWarning: No result data found for ID {_id}")
         except Exception as e:
             print(f"\nError reading results: {e}")
 
     print("="*60 + "\n")
-
-    # ============================================================
-    # Visualize RWA results (following Figure 3.2 style)
-    # ============================================================
-    if f"{route_function} RWA" in result_data:
-        rwa_result = result_data[f"{route_function} RWA"]
-        print(f"\nprinting RWA heatmap...")
-
-        try:
-            from plot_rwa import plot_rwa_heatmap
-
-            plot_rwa_heatmap(
-                graph,
-                rwa_result,
-                title=f"{topology_name} with {route_function} Routing",
-                save_path=f"rwa_{route_function}_{topology_name.lower()}.png"
-            )
-            print(f"RWA saved: rwa_{route_function}_{topology_name.lower()}.png")
-        except ImportError:
-            print("Warning: Unable to import plot_rwa module, skipping visualization")
-        except Exception as e:
-            print(f"Error during visualization: {e}")
-else:
-    print(f"\nWarning: No result data found for ID {_id}")
-
 
 print("=" * 60 + "\n")
