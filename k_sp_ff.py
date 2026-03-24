@@ -5,8 +5,8 @@ if __name__ == "__main__":
     # ============================================================
     # Band Selection Configuration
     # ============================================================
-    # Available bands: "C", "C+L", "SCL", "SCLO"
-    BAND_SELECTION = "C"  # Change this to select different bands
+    # Available bands: "C", "CL", "SCL", "SCLO"
+    BAND_SELECTION = "CL"  # Change this to select different bands
     
     # Band configurations (same as ilp_connections.py)
     BAND_CONFIGS = {
@@ -20,18 +20,18 @@ if __name__ == "__main__":
             "channel_bandwidth_GHz": 50,
             "description": "C band: 1530-1570 nm (40 nm)"
         },
-        "C+L": {
-            "name": "C+L band",
+        "CL": {
+            "name": "CL band",
             "wavelength_start_nm": 1530,
             "wavelength_width_nm": 95,
             "B_o_THz": 11.8,
             "RefLambda_nm": 1577.5,
             "Cr": 0.028 / 1e3 / 1e12,
             "channel_bandwidth_GHz": 50,
-            "description": "C+L band: 1530-1625 nm (95 nm)"
+            "description": "CL band: 1530-1625 nm (95 nm)"
         },
         "SCL": {
-            "name": "SCL band (Super C+L)",
+            "name": "SCL band",
             "wavelength_start_nm": 1460,
             "wavelength_width_nm": 165,
             "B_o_THz": 20.86,
@@ -127,7 +127,8 @@ if __name__ == "__main__":
                                                                port=port,
                                                                hostname=hostname, fibre_num=1,
                                                                band_selection=BAND_SELECTION, band_config=band_config,
-                                                               span_length_km=span_length_km)
+                                                               span_length_km=span_length_km,
+                                                               throughput=False)
     route_function = "kSP-FF"
     for graph, _id, T_c in graph_list:
         # Print topology information (Topology Design)

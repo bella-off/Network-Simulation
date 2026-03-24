@@ -8,8 +8,8 @@ if __name__ == "__main__":
     # ============================================================
     # Band Selection Configuration
     # ============================================================
-    # Available bands: "C", "C+L", "SCL", "SCLO"
-    BAND_SELECTION = "C"  # Change this to select different bands
+    # Available bands: "C", "CL", "SCL", "SCLO"
+    BAND_SELECTION = "CL"  # Change this to select different bands
     span_length_km = 80  # Fiber span length in km (default: 80 km, changed to 10 km)
 
 # Band configurations
@@ -24,18 +24,18 @@ if __name__ == "__main__":
             "channel_bandwidth_GHz": 50,     # Channel bandwidth in GHz (standard for C band)
             "description": "C band: 1530-1570 nm (40 nm)"
         },
-        "C+L": {
-            "name": "C+L band",
+        "CL": {
+            "name": "CL band",
             "wavelength_start_nm": 1530,
             "wavelength_width_nm": 95,       # C+L band width
             "B_o_THz": 11.8,                 # C+L band total bandwidth
             "RefLambda_nm": 1577.5,          # Center of C+L band
             "Cr": 0.028 / 1e3 / 1e12,       # Enable ISRS for C+L
             "channel_bandwidth_GHz": 50,     # Channel bandwidth in GHz (standard for C+L band)
-            "description": "C+L band: 1530-1625 nm (95 nm)"
+            "description": "CL band: 1530-1625 nm (95 nm)"
         },
         "SCL": {
-            "name": "SCL band (Super C+L)",
+            "name": "SCL band",
             "wavelength_start_nm": 1460,
             "wavelength_width_nm": 165,      # SCL band width
             "B_o_THz": 20.86,                # SCL band total bandwidth
@@ -45,7 +45,7 @@ if __name__ == "__main__":
             "description": "SCL band: 1460-1625 nm (165 nm)"
         },
         "SCLO": {
-            "name": "SCLO band (Super C+L+O)",
+            "name": "SCLO band",
             "wavelength_start_nm": 1260,     # Extended to O band
             "wavelength_width_nm": 365,      # SCLO band width (1260-1625 nm)
             "B_o_THz": 46.0,                 # SCLO band total bandwidth
@@ -113,7 +113,7 @@ if __name__ == "__main__":
     # parralel_ILP_throughput
     nt.NetworkSimulator.parralel_ILP_connections(graph_list, db=db, collection=collection, max_time=48*3600, workers=len(graph_list),
                                  threads=4, fibre_num=1, hostname=hostname, port=port,
-                                 insert=False, bandwidth=channel_bandwidth, throughput=True, blocking_rate=0,
+                                 insert=False, bandwidth=channel_bandwidth, throughput=False, blocking_rate=0,
                                  k=1, band_selection=BAND_SELECTION, band_config=band_config,
                                  span_length_km=span_length_km,node_file_start=0.5,)
 
