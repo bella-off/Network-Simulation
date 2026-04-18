@@ -1,111 +1,182 @@
 import NetworkToolkit as nt
 import numpy as np
-import argparse   
+import argparse
+from scipy.constants import c as C_LIGHT
+
 
 def parse_args():
     # fmt: off
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-mc", type=int, default=1, help="maximum number of graphs to read")
-    
+
     args = parser.parse_args()
 
-
     return args
+
 
 if __name__ == "__main__":
     # ============================================================
     # Band Selection Configuration
     # ============================================================
-    # Available bands: "C", "CL", "SCL", "SCLO"
-    BAND_SELECTION = "CL"  # Change this to select different bands
-    
-    # Band configurations (same as ilp_connections.py)
+    # Keys match ``compute_throughput_cfm.BAND_CONFIGS`` (O, E, S, C, L, CL, SCL, ESCL, OESCL).
+    BAND_SELECTION = "ESCL"  # Change this to select different bands
+
+    _CR_RAMAN = 0.028 / 1e3 / 1e12  # same as legacy CL / SCL / multi-band entries
+
+    def _rwa_phys_continuous_nm(lam_min_nm: float, lam_max_nm: float, cr: float):
+        """Continuous λ window → heuristic RWA fields (50 GHz channels, B_o from Δf)."""
+        lam_min_m = lam_min_nm * 1e-9
+        lam_max_m = lam_max_nm * 1e-9
+        b_o_hz = C_LIGHT * (1.0 / lam_min_m - 1.0 / lam_max_m)
+        return {
+            "wavelength_start_nm": lam_min_nm,
+            "wavelength_width_nm": lam_max_nm - lam_min_nm,
+            "B_o_THz": b_o_hz / 1e12,
+            "RefLambda_nm": (lam_min_nm + lam_max_nm) / 2.0,
+            "Cr": cr,
+            "channel_bandwidth_GHz": 50.0,
+        }
+
+    # Same structure as compute_throughput_cfm.py: name, bands, description;
+    # plus legacy keys required by ``NetworkSimulator.parralel_heuristic_throughput``.
     BAND_CONFIGS = {
+        "O": {
+            "name": "O band",
+            "bands": ["O"],
+            "description": "O band only",
+            **_rwa_phys_continuous_nm(1260.0, 1358.0, _CR_RAMAN),
+        },
+        "E": {
+            "name": "E band",
+            "bands": ["E"],
+            "description": "E band only",
+            **_rwa_phys_continuous_nm(1405.0, 1464.0, _CR_RAMAN),
+        },
+        "S": {
+            "name": "S band",
+            "bands": ["S"],
+            "description": "S band only",
+            **_rwa_phys_continuous_nm(1470.0, 1526.0, _CR_RAMAN),
+        },
         "C": {
             "name": "C band",
-            "wavelength_start_nm": 1530,
+            "bands": ["C"],
+            "description": "C band only",
+            "wavelength_start_nm": 1530.0,
             "wavelength_width_nm": 40.049,
             "B_o_THz": 5.0,
-            "RefLambda_nm": 1550,
-            "Cr": 0,
-            "channel_bandwidth_GHz": 50,
-            "description": "C band: 1530-1570 nm (40 nm)"
+            "RefLambda_nm": 1550.0,
+            "Cr": 0.0,
+            "channel_bandwidth_GHz": 50.0,
+        },
+        "L": {
+            "name": "L band",
+            "bands": ["L"],
+            "description": "L band only",
+            **_rwa_phys_continuous_nm(1573.0, 1625.0, _CR_RAMAN),
         },
         "CL": {
             "name": "CL band",
-            "wavelength_start_nm": 1530,
-            "wavelength_width_nm": 95,
+            "bands": ["C", "L"],
+            "description": "C+L bands",
+            "wavelength_start_nm": 1530.0,
+            "wavelength_width_nm": 95.0,
             "B_o_THz": 11.8,
             "RefLambda_nm": 1577.5,
-            "Cr": 0.028 / 1e3 / 1e12,
-            "channel_bandwidth_GHz": 50,
-            "description": "CL band: 1530-1625 nm (95 nm)"
+            "Cr": _CR_RAMAN,
+            "channel_bandwidth_GHz": 50.0,
         },
         "SCL": {
             "name": "SCL band",
-            "wavelength_start_nm": 1460,
-            "wavelength_width_nm": 165,
+            "bands": ["S", "C", "L"],
+            "description": "S+C+L bands",
+            "wavelength_start_nm": 1460.0,
+            "wavelength_width_nm": 165.0,
             "B_o_THz": 20.86,
             "RefLambda_nm": 1542.5,
-            "Cr": 0.028 / 1e3 / 1e12,
-            "channel_bandwidth_GHz": 50,
-            "description": "SCL band: 1460-1625 nm (165 nm)"
+            "Cr": _CR_RAMAN,
+            "channel_bandwidth_GHz": 50.0,
         },
+        "ESCL": {
+            "name": "ESCL band",
+            "bands": ["E", "S", "C", "L"],
+            "description": "E+S+C+L bands",
+            **_rwa_phys_continuous_nm(1405.0, 1625.0, _CR_RAMAN),
+        },
+        "OESCL": {
+            "name": "OESCL band",
+            "bands": ["O", "E", "S", "C", "L"],
+            "description": "All bands (O+E+S+C+L)",
+            "wavelength_start_nm": 1312.64,
+            "wavelength_width_nm": 312.36,
+            "B_o_THz": 43.91,
+            "RefLambda_nm": 1452.22,
+            "Cr": 0.028 / 1e3 / 1e12,
+            "channel_bandwidth_GHz": 50.0,
+            "num_channels": 880,
+        },
+        # Legacy wide window (optional); kept for compatibility with older runs / docs
         "SCLO": {
             "name": "SCLO band",
-            "wavelength_start_nm": 1260,
-            "wavelength_width_nm": 365,
+            "description": "SCLO band: 1260-1625 nm (365 nm)",
+            "wavelength_start_nm": 1260.0,
+            "wavelength_width_nm": 365.0,
             "B_o_THz": 46.0,
             "RefLambda_nm": 1442.5,
-            "Cr": 0.028 / 1e3 / 1e12,
-            "channel_bandwidth_GHz": 50,
-            "description": "SCLO band: 1260-1625 nm (365 nm)"
-        }
+            "Cr": _CR_RAMAN,
+            "channel_bandwidth_GHz": 50.0,
+        },
     }
-    
+
     # Get selected band configuration
     if BAND_SELECTION not in BAND_CONFIGS:
-        raise ValueError(f"Invalid band selection: {BAND_SELECTION}. "
-                        f"Available options: {list(BAND_CONFIGS.keys())}")
-    
+        raise ValueError(
+            f"Invalid band selection: {BAND_SELECTION}. "
+            f"Available options: {list(BAND_CONFIGS.keys())}"
+        )
+
     band_config = BAND_CONFIGS[BAND_SELECTION]
-    
+
     # Calculate channel bandwidth from band configuration
-    channel_bandwidth = band_config['channel_bandwidth_GHz'] * 1e9  # Convert GHz to Hz
-    
+    channel_bandwidth = band_config["channel_bandwidth_GHz"] * 1e9  # Convert GHz to Hz
+
     # Calculate number of channels based on B_o and channel_bandwidth
-    B_o = band_config['B_o_THz'] * 1e12  # Convert THz to Hz
-    num_channels = int(np.floor(B_o / channel_bandwidth))
-    
-    print("="*60)
+    B_o = band_config["B_o_THz"] * 1e12  # Convert THz to Hz
+    if band_config.get("num_channels") is not None:
+        num_channels = int(band_config["num_channels"])
+    else:
+        num_channels = int(np.floor(B_o / channel_bandwidth))
+
+    print("=" * 60)
     print(f"Selected Band: {band_config['name']}")
     print(f"Description: {band_config['description']}")
-    print(f"Wavelength Range: {band_config['wavelength_start_nm']:.1f} - "
-          f"{band_config['wavelength_start_nm'] + band_config['wavelength_width_nm']:.1f} nm")
+    print(
+        f"Wavelength Range: {band_config['wavelength_start_nm']:.1f} - "
+        f"{band_config['wavelength_start_nm'] + band_config['wavelength_width_nm']:.1f} nm"
+    )
     print(f"Total Bandwidth: {band_config['B_o_THz']:.2f} THz")
     print(f"Channel Bandwidth: {band_config['channel_bandwidth_GHz']:.1f} GHz")
     print(f"Number of Channels: {num_channels}")
     print(f"Reference Wavelength: {band_config['RefLambda_nm']:.1f} nm")
-    print("="*60)
-    
+    print("=" * 60)
+
     # ============================================================
     # Fiber Span Length Configuration
     # ============================================================
     span_length_km = 80  # Fiber span length in km (default: 80 km)
     print(f"Fiber Span Length: {span_length_km} km")
-    print("="*60)
-    
+    print("=" * 60)
+
     args = parse_args()
     # collection= "mpnn_uniform"
     # db = "MPNNDB"
-    collection = "topology-paper"
+    collection = "real"
     db = "Topology_Data"
 
-
-    hostname = "128.40.42.13"
-    # hostname = None   # None to use the Ray
-
+    # Ray: default local. For remote cluster, set hostname (and matching port).
+    hostname = None
+    # hostname = "128.40.42.13"
     port = 6379
     skip = 0
     count = args.mc
@@ -113,104 +184,113 @@ if __name__ == "__main__":
     max_total_graphs = 1  # Process at most 1 graph
     total_processed = 0
 
-
     while True:
-        # graph_list = nt.Database.read_topology_dataset_list(db, collection, "T_c",
-        #                                                   find_dic={"nodes":{"$gte":10}},
-        #                                                   node_data=False, max_count=count,
-        #                                                   skip=skip
-        #                                                   )
-
-        graph_list = nt.Database.read_topology_dataset_list(db, collection, 
-                                                              find_dic={"name": "NSFNET"},
-                                                              node_data=True,
-                                                              max_count=count,
-                                                              skip=skip)
+        graph_list = nt.Database.read_topology_dataset_list(
+            db,
+            collection,
+            find_dic={"name": "RegularDCI"},
+            node_data=True,
+            max_count=count,
+            skip=skip,
+        )
 
         if len(graph_list) == 0 or total_processed >= max_total_graphs:
             break
 
-
         matrix_one = np.ones((len(graph_list[0][0].nodes), len(graph_list[0][0].nodes)))
         np.fill_diagonal(matrix_one, 0)
         T_c = (matrix_one / (len(graph_list[0][0].nodes) * (len(graph_list[0][0].nodes) - 1))).tolist()
-        graph_list = [(graph, _id, T_c) for graph,_id in graph_list]
+        graph_list = [(graph, _id, T_c) for graph, _id in graph_list]
 
-        result = nt.NetworkSimulator.parralel_heuristic_throughput(graph_list, collection=collection, db=db,
-                                                                workers=len(graph_list),
-                                                                route_function="FF-kSP",
-                                                                e=100, k=5, m_step=200, channel_bandwidth=channel_bandwidth,
-                                                                max_count=10,
-                                                                m_start=0,
-                                                                port=port,
-                                                                hostname=hostname, fibre_num=1,
-                                                                band_selection=BAND_SELECTION, band_config=band_config,
-                                                                span_length_km=span_length_km)
-        
+        result = nt.NetworkSimulator.parralel_heuristic_throughput(
+            graph_list,
+            collection=collection,
+            db=db,
+            workers=len(graph_list),
+            route_function="FF-kSP",
+            e=100,
+            k=50,
+            m_step=200,
+            channel_bandwidth=channel_bandwidth,
+            max_count=10,
+            m_start=0,
+            port=port,
+            hostname=hostname,
+            fibre_num=1,
+            band_selection=BAND_SELECTION,
+            band_config=band_config,
+            span_length_km=span_length_km,
+            throughput=True,
+        )
+
         # Print results
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Results Summary")
-        print("="*60)
-        
+        print("=" * 60)
+
         route_function = "FF-kSP"
+        band_tag = str(BAND_SELECTION).strip().upper()
+        rwa_key_vis = f"{route_function} {band_tag} RWA"
+
         for graph, _id, T_c in graph_list:
             # Print topology information (Topology Design)
             print(f"\nTopology ID: {_id}")
             print(f"Number of Nodes: {len(graph.nodes)}")
             print(f"Number of Edges: {len(graph.edges)}")
-            print(f"Average Degree: {2*len(graph.edges)/len(graph.nodes):.2f}")
-            
+            print(f"Average Degree: {2 * len(graph.edges) / len(graph.nodes):.2f}")
+
             # Read results from database
             try:
-                results = list(nt.Database.read_data(db, collection, 
-                                                     find_dic={"_id": _id},
-                                                     max_count=1))
+                results = list(
+                    nt.Database.read_data(db, collection, find_dic={"_id": _id}, max_count=1)
+                )
                 if len(results) > 0:
                     result_data = results[0]
-                    
+
                     # Print throughput results
                     capacity_key = f"{route_function} Capacity"
                     connections_key = f"{route_function}-connections"
                     time_key = f"{route_function} time"
-                    
+
                     if capacity_key in result_data:
                         throughput = result_data[capacity_key]
-                        print(f"\nThroughput: {throughput:.2e} bps ({throughput/1e12:.4f} Tbps)")
-                    
+                        print(f"\nThroughput: {throughput:.2e} bps ({throughput / 1e12:.4f} Tbps)")
+
                     if connections_key in result_data:
                         connections = result_data[connections_key]
                         print(f"Max Connections M: {connections}")
-                    
+
                     if time_key in result_data:
                         time_taken = result_data[time_key]
                         print(f"Computation Time: {time_taken:.2f} seconds")
-                    
+
                     # Print other parameters
                     if f"{route_function} channel number" in result_data:
                         channels = result_data[f"{route_function} channel number"]
                         print(f"Number of Channels: {channels}")
-                    
+
                     if f"{route_function} channel bandwidth" in result_data:
                         bandwidth = result_data[f"{route_function} channel bandwidth"]
-                        print(f"Channel Bandwidth: {bandwidth/1e9:.1f} GHz")
-                    
+                        print(f"Channel Bandwidth: {bandwidth / 1e9:.1f} GHz")
+
                     # ============================================================
-                    # Visualize RWA results (following Figure 3.2 style)
+                    # Visualize RWA results (band-aware MongoDB key, same as write path)
                     # ============================================================
-                    if f"{route_function} RWA" in result_data:
-                        rwa_result = result_data[f"{route_function} RWA"]
+                    if rwa_key_vis in result_data:
+                        rwa_result = result_data[rwa_key_vis]
                         print(f"\nprinting RWA heatmap...")
 
                         try:
                             from plot_rwa import plot_rwa_heatmap
 
+                            safe_route = route_function.replace("-", "_")
                             plot_rwa_heatmap(
                                 graph,
                                 rwa_result,
-                                title=f"NSFNET with {route_function} Routing",
-                                save_path=f"rwa_{route_function}_nsfnet.png"
+                                title=f"NSFNET with {route_function} Routing ({band_tag})",
+                                save_path=f"rwa_{safe_route}_{band_tag}_nsfnet.png",
                             )
-                            print(f"RWA saved: rwa_{route_function}_nsfnet.png")
+                            print(f"RWA saved: rwa_{safe_route}_{band_tag}_nsfnet.png")
                         except ImportError:
                             print("Warning: Unable to import plot_rwa module, skipping visualization")
                         except Exception as e:
@@ -219,14 +299,13 @@ if __name__ == "__main__":
                     print(f"\nWarning: No result data found for ID {_id}")
             except Exception as e:
                 print(f"\nError reading results: {e}")
-        
-        print("="*60 + "\n")
-        
+
+        print("=" * 60 + "\n")
+
         # Update counters
         total_processed += len(graph_list)
         skip += count
-        
+
         # Check if we've processed enough graphs
         if total_processed >= max_total_graphs:
             break
-

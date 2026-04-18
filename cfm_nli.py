@@ -19,9 +19,9 @@ from jax.numpy import (
     exp, sqrt, log, abs, arcsinh, arctan, nan_to_num,
 )
 from scipy.constants import pi, c
+from scipy.optimize import least_squares
 
 from ong.models import raman_solver
-from ong.models.raman_fitting import get_power_profile_fit
 
 # ---------------------------------------------------------------------------
 # Binary index tables used by the vmap-based summation over conjugate terms
@@ -29,6 +29,89 @@ from ong.models.raman_fitting import get_power_profile_fit
 _INDICES = (jnp.arange(4)[:, None] >> jnp.arange(2)) & 1
 _INDICES_COI = (jnp.arange(16)[:, None] >> jnp.arange(4)) & 1
 _INDICES_FWM = (jnp.arange(64)[:, None] >> jnp.arange(6)) & 1
+
+
+def get_power_profile_fit(
+    length_j,
+    power_evo_j,
+    ch_centre_ij,
+    ch_power_W_ij,
+    attenuation_ij,
+    raman_gain_slope_j,
+    zspan,
+    j=0,
+    **kwargs,
+):
+    """Fit semi-analytical ISRS power profile parameters [a, a_bar, Cr]."""
+    neper = np.log(10) / 10.0
+    l = float(length_j[j])
+    num_ch = ch_power_W_ij.shape[0]
+
+    att_profile = np.asarray(attenuation_ij[:, j], dtype=float) * neper
+    att_profile_min = np.nanmin(att_profile)
+    leff_min = (1.0 - np.exp(-att_profile_min * l)) / att_profile_min
+
+    z_fit = np.arange(0.0, leff_min + 1e-12, 1000.0)
+
+    true_prof = np.asarray(power_evo_j[j, :, :], dtype=float).copy()
+    true_prof = true_prof / true_prof[0:1, :]
+
+    nfit = min(len(z_fit), true_prof.shape[0], len(zspan))
+    z_fit = z_fit[:nfit]
+    p_actual = true_prof[:nfit, :]
+
+    launch_power = np.asarray(ch_power_W_ij[:, j], dtype=float)
+    valid_idx = np.where(launch_power != 0)[0]
+    Ptot = np.nansum(launch_power)
+
+    f_k = np.asarray(ch_centre_ij[:, j], dtype=float)
+    fc = np.nanmean(f_k[valid_idx]) if len(valid_idx) else 0.0
+    f_k = f_k - fc
+
+    Cr0_global = float(raman_gain_slope_j[j])
+    Att0_global = float(np.nanmean(att_profile))
+
+    params = np.full((num_ch, 3), np.nan, dtype=float)
+
+    def L_eff(a_bar):
+        return (1.0 - np.exp(-a_bar * z_fit)) / a_bar
+
+    def p_fit(a, a_bar, Cr, fki):
+        return np.exp(-a * z_fit) * (1.0 - Cr * Ptot * L_eff(a_bar) * fki)
+
+    for i in valid_idx:
+        p_i = p_actual[:, i]
+
+        a_ref = Att0_global
+        a_bar_ref = float(att_profile[i])
+        Cr_ref = Cr0_global
+
+        def residual(scale):
+            a = scale[0] * a_ref
+            a_bar = scale[1] * a_bar_ref
+            Cr = scale[2] * Cr_ref
+            return np.abs(p_fit(a, a_bar, Cr, f_k[i]) - p_i)
+
+        res = least_squares(
+            residual,
+            x0=np.array([1.0, 1.0, 1.0], dtype=float),
+            bounds=(
+                np.array([0.1, 0.1, 0.5], dtype=float),
+                np.array([10.0, 10.0, 2.0], dtype=float),
+            ),
+            ftol=1e-15,
+            xtol=1e-15,
+            gtol=1e-15,
+            max_nfev=1e3,
+        )
+
+        scale = res.x
+        a = scale[0] * a_ref
+        a_bar = scale[1] * a_bar_ref
+        Cr = scale[2] * Cr_ref
+        params[i, :] = [a, a_bar, Cr]
+
+    return params
 
 
 # ---------------------------------------------------------------------------
@@ -184,6 +267,45 @@ def _FWM_idx(f):
         idx_flat
     )
     valid = jnp.zeros((n, M)).at[ch, r].set(True)
+    return idx_pad, valid
+
+
+def _FWM_idx_chunk(f, coi_idx):
+    """Build padded FWM indices for a subset of COI channels."""
+    freqs = f.squeeze()
+    coi_idx = jnp.asarray(coi_idx, dtype=jnp.int32)
+
+    f_i = freqs[coi_idx][:, None, None, None]
+    f_j = freqs[None, :, None, None]
+    f_k = freqs[None, None, :, None]
+    f_m = freqs[None, None, None, :]
+
+    cond = (
+        ((f_j + f_k - f_m) == f_i)
+        & (f_j != f_i)
+        & (f_k != f_m)
+        & (f_k != f_i)
+        & (f_j != f_m)
+        & (f_j <= f_k)
+    )
+    i_loc, j_idx, k_idx, m_idx = jnp.nonzero(cond)
+    i_idx = coi_idx[i_loc]
+    idx_flat = jnp.stack([i_idx, j_idx, k_idx, m_idx], axis=-1)
+    counts = jnp.bincount(i_loc, length=coi_idx.size)
+
+    n = counts.size
+    K = idx_flat.shape[0]
+    M = int(counts.max()) if n > 0 else 0
+    M = max(M, 1)
+
+    s = jnp.concatenate([jnp.array([0]), jnp.cumsum(counts)[:-1]])
+    ch = jnp.repeat(jnp.arange(n), counts)
+    r = jnp.arange(K) - s[ch]
+
+    idx_pad = jnp.zeros((n, M, idx_flat.shape[1]), idx_flat.dtype)
+    valid = jnp.zeros((n, M), dtype=bool)
+    idx_pad = idx_pad.at[ch, r].set(idx_flat)
+    valid = valid.at[ch, r].set(True)
     return idx_pad, valid
 
 
@@ -426,7 +548,7 @@ def _eta_GN_FWM(
             Ptot, P, beta2, beta3, beta4, a, a_bar, f, B, Cr, gamma, L, idx_ch, valid_ch
         )
 
-    return jax.lax.map(_ch, jnp.arange(f.size))
+    return jax.lax.map(_ch, jnp.arange(idx_pad.shape[0]))
 
 
 # ---------------------------------------------------------------------------
@@ -449,6 +571,8 @@ def compute_edge_nli(
     raman_gain_slope,
     o_band_mask=None,
     samples_per_km=2,
+    fwm_mode="chunk",
+    fwm_chunk_size=8,
 ):
     """Compute per-channel NLI efficiency for a single homogeneous link.
 
@@ -525,10 +649,29 @@ def compute_edge_nli(
         raman_gain_slope_j=raman_gain_slope_j,
         zspan=z,
     )[:, :, None]  # shape (N, 3, 1)
+    fit_params = jnp.array(fit_params)
+    def _reshape_param_to_channels(param_col, n_channels):
+        """Force a parameter column to shape (n_channels, 1)."""
+        flat = jnp.ravel(param_col)
+        if flat.size == n_channels:
+            out = flat
+        elif flat.size == 1:
+            out = jnp.repeat(flat, n_channels)
+        elif flat.size > n_channels:
+            out = flat[:n_channels]
+        else:
+            reps = int(np.ceil(n_channels / flat.size))
+            out = jnp.tile(flat, reps)[:n_channels]
+        return out[:, None]
 
-    a = fit_params[:, 0]      # shape (N, 1)
-    a_bar = fit_params[:, 1]  # shape (N, 1)
-    Cr = fit_params[:, 2]     # shape (N, 1)
+    a = _reshape_param_to_channels(fit_params[:, 0], N)      # shape (N, 1)
+    a_bar = _reshape_param_to_channels(fit_params[:, 1], N)  # shape (N, 1)
+    Cr = _reshape_param_to_channels(fit_params[:, 2], N)     # shape (N, 1)
+
+
+    # a = fit_params[:, 0]      # shape (N, 1)
+    # a_bar = fit_params[:, 1]  # shape (N, 1)
+    # Cr = fit_params[:, 2]     # shape (N, 1)
 
     # --- 3. Prepare intermediate variables for NLI ---------------------
     j = 0
@@ -585,26 +728,56 @@ def compute_edge_nli(
 
     # --- 6. FWM (O-band only) ------------------------------------------
     eta_fwm = jnp.zeros(N)
-    if o_band_mask is not None and jnp.any(o_band_mask):
+    if (
+        fwm_mode != "off"
+        and o_band_mask is not None
+        and jnp.any(o_band_mask)
+    ):
         o_idx = jnp.where(o_band_mask)[0]
         f_o = f_i[o_idx, 0]
-        idx_pad, valid = _FWM_idx(f_o)
-        eta_fwm_o = _eta_GN_FWM(
-            Ptot[j],
-            P_i[o_idx, 0],
-            beta2,
-            beta3,
-            beta4,
-            a_i[o_idx, 0],
-            a_bar_i[o_idx, 0],
-            f_o,
-            B_i[o_idx, 0],
-            Cr_i[o_idx, 0],
-            gamma_ij[o_idx, j],
-            length_j[j],
-            idx_pad,
-            valid,
-        )
+        if fwm_mode == "full":
+            idx_pad, valid = _FWM_idx(f_o)
+            eta_fwm_o = _eta_GN_FWM(
+                Ptot[j],
+                P_i[o_idx, 0],
+                beta2,
+                beta3,
+                beta4,
+                a_i[o_idx, 0],
+                a_bar_i[o_idx, 0],
+                f_o,
+                B_i[o_idx, 0],
+                Cr_i[o_idx, 0],
+                gamma_ij[o_idx, j],
+                length_j[j],
+                idx_pad,
+                valid,
+            )
+        else:
+            eta_fwm_o = jnp.zeros_like(f_o)
+            n_o = int(o_idx.shape[0])
+            step = max(int(fwm_chunk_size), 1)
+            for start in range(0, n_o, step):
+                stop = min(start + step, n_o)
+                coi_idx = jnp.arange(start, stop)
+                idx_pad, valid = _FWM_idx_chunk(f_o, coi_idx)
+                eta_chunk = _eta_GN_FWM(
+                    Ptot[j],
+                    P_i[o_idx, 0],
+                    beta2,
+                    beta3,
+                    beta4,
+                    a_i[o_idx, 0],
+                    a_bar_i[o_idx, 0],
+                    f_o,
+                    B_i[o_idx, 0],
+                    Cr_i[o_idx, 0],
+                    gamma_ij[o_idx, j],
+                    length_j[j],
+                    idx_pad,
+                    valid,
+                )
+                eta_fwm_o = eta_fwm_o.at[start:stop].set(eta_chunk)
         eta_fwm = eta_fwm.at[o_idx].set(eta_fwm_o)
 
     # --- 7. Scale by num_spans (incoherent accumulation) ----------------

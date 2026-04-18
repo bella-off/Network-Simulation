@@ -122,8 +122,8 @@ if __name__ == "__main__":
     print("="*60)
 
     # 处理每个频段
-        print(f"\nProcessing {band} band...")
-        copy_rwa_to_band_field(
+    print(f"\nProcessing {band} band...")
+    copy_rwa_to_band_field(
             db_name=db_name,
             collection_name=collection_name,
             band_selection=band,

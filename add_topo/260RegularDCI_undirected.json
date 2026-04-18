@@ -1,0 +1,85 @@
+{
+    "directed": false,
+    "multigraph": false,
+    "graph": {},
+    "nodes": [
+        {
+            "id": 1,
+            "name": "DC0",
+            "latitude": 51.5,
+            "longitude": -0.4
+        },
+        {
+            "id": 2,
+            "name": "DC1",
+            "latitude": 51.64,
+            "longitude": -0.3
+        },
+        {
+            "id": 3,
+            "name": "DC2",
+            "latitude": 51.64,
+            "longitude": -0.1
+        },
+        {
+            "id": 4,
+            "name": "DC3",
+            "latitude": 51.5,
+            "longitude": 0.0
+        },
+        {
+            "id": 5,
+            "name": "DC4",
+            "latitude": 51.36,
+            "longitude": -0.1
+        },
+        {
+            "id": 6,
+            "name": "DC5",
+            "latitude": 51.36,
+            "longitude": -0.3
+        }
+    ],
+    "links": [
+        {
+            "distance": 260,
+            "source": 1,
+            "target": 2
+        },
+        {
+            "distance": 260,
+            "source": 1,
+            "target": 6
+        },
+        {
+            "distance": 260,
+            "source": 2,
+            "target": 3
+        },
+        {
+            "distance": 260,
+            "source": 2,
+            "target": 6
+        },
+        {
+            "distance": 260,
+            "source": 3,
+            "target": 4
+        },
+        {
+            "distance": 260,
+            "source": 3,
+            "target": 5
+        },
+        {
+            "distance": 260,
+            "source": 4,
+            "target": 5
+        },
+        {
+            "distance": 260,
+            "source": 5,
+            "target": 6
+        }
+    ]
+}

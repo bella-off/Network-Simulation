@@ -1,0 +1,236 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {
+    "name": "LONDON",
+    "source_file": "LONDON.xlsx",
+    "notes": [
+      "Converted from spreadsheet sheets Nodes_LONDON and Edges_LONDON.",
+      "Node type is not provided in the spreadsheet; defaulted to 'Metro' for all nodes.",
+      "Node name defaults to the node id because Location Name is blank in the spreadsheet for populated rows."
+    ]
+  },
+  "nodes": [
+    {
+      "id": 1,
+      "type": "Metro",
+      "name": "1",
+      "latitude": 51.5,
+      "longitude": -0.02,
+      "country": "UK"
+    },
+    {
+      "id": 2,
+      "type": "Metro",
+      "name": "2",
+      "latitude": 51.52,
+      "longitude": -0.09,
+      "country": "UK"
+    },
+    {
+      "id": 3,
+      "type": "Metro",
+      "name": "3",
+      "latitude": 51.52,
+      "longitude": -0.62,
+      "country": "UK"
+    },
+    {
+      "id": 4,
+      "type": "Metro",
+      "name": "4",
+      "latitude": 51.51,
+      "longitude": -0.4,
+      "country": "UK"
+    },
+    {
+      "id": 5,
+      "type": "Metro",
+      "name": "5",
+      "latitude": 51.42,
+      "longitude": -0.77,
+      "country": "UK"
+    },
+    {
+      "id": 6,
+      "type": "Metro",
+      "name": "6",
+      "latitude": 51.37,
+      "longitude": -0.29,
+      "country": "UK"
+    },
+    {
+      "id": 7,
+      "type": "Metro",
+      "name": "7",
+      "latitude": 51.47,
+      "longitude": -0.4,
+      "country": "UK"
+    },
+    {
+      "id": 8,
+      "type": "Metro",
+      "name": "8",
+      "latitude": 51.51,
+      "longitude": 0.0,
+      "country": "UK"
+    },
+    {
+      "id": 9,
+      "type": "Metro",
+      "name": "9",
+      "latitude": 51.53,
+      "longitude": -0.1,
+      "country": "UK"
+    },
+    {
+      "id": 10,
+      "type": "Metro",
+      "name": "10",
+      "latitude": 51.51,
+      "longitude": -0.44,
+      "country": "UK"
+    },
+    {
+      "id": 11,
+      "type": "Metro",
+      "name": "11",
+      "latitude": 51.48,
+      "longitude": 0.27,
+      "country": "UK"
+    },
+    {
+      "id": 12,
+      "type": "Metro",
+      "name": "12",
+      "latitude": 51.32,
+      "longitude": -0.58,
+      "country": "UK"
+    },
+    {
+      "id": 13,
+      "type": "Metro",
+      "name": "13",
+      "latitude": 51.38,
+      "longitude": -0.14,
+      "country": "UK"
+    }
+  ],
+  "links": [
+    {
+      "source": 1,
+      "target": 2,
+      "distance": 5.32
+    },
+    {
+      "source": 1,
+      "target": 8,
+      "distance": 1.77
+    },
+    {
+      "source": 1,
+      "target": 9,
+      "distance": 6.54
+    },
+    {
+      "source": 1,
+      "target": 13,
+      "distance": 15.64
+    },
+    {
+      "source": 2,
+      "target": 4,
+      "distance": 21.56
+    },
+    {
+      "source": 2,
+      "target": 8,
+      "distance": 6.34
+    },
+    {
+      "source": 2,
+      "target": 9,
+      "distance": 1.32
+    },
+    {
+      "source": 2,
+      "target": 10,
+      "distance": 24.31
+    },
+    {
+      "source": 2,
+      "target": 11,
+      "distance": 25.29
+    },
+    {
+      "source": 3,
+      "target": 4,
+      "distance": 15.3
+    },
+    {
+      "source": 3,
+      "target": 5,
+      "distance": 15.28
+    },
+    {
+      "source": 3,
+      "target": 7,
+      "distance": 16.23
+    },
+    {
+      "source": 3,
+      "target": 10,
+      "distance": 12.51
+    },
+    {
+      "source": 3,
+      "target": 12,
+      "distance": 22.42
+    },
+    {
+      "source": 4,
+      "target": 5,
+      "distance": 27.53
+    },
+    {
+      "source": 4,
+      "target": 7,
+      "distance": 4.45
+    },
+    {
+      "source": 4,
+      "target": 10,
+      "distance": 2.77
+    },
+    {
+      "source": 5,
+      "target": 12,
+      "distance": 17.16
+    },
+    {
+      "source": 6,
+      "target": 7,
+      "distance": 13.46
+    },
+    {
+      "source": 6,
+      "target": 12,
+      "distance": 20.93
+    },
+    {
+      "source": 6,
+      "target": 13,
+      "distance": 10.49
+    },
+    {
+      "source": 9,
+      "target": 10,
+      "distance": 23.68
+    },
+    {
+      "source": 9,
+      "target": 11,
+      "distance": 26.29
+    }
+  ]
+}
