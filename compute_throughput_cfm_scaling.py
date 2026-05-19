@@ -170,10 +170,14 @@ def compute_scaled_graph_throughput(
         jnp.asarray(occupancy_matrix), dtype=jnp.float64
     )
     fit_params_per_link: dict[int, np.ndarray] = {}
+    eta_spm_per_link: dict[int, np.ndarray] = {}
+    eta_xpm_per_link: dict[int, np.ndarray] = {}
+    eta_fwm_per_link: dict[int, np.ndarray] = {}
+    nsr_ase_per_link: dict[int, np.ndarray] = {}
     n_links = int(span_count_per_edge.shape[0])
 
     for i in range(n_links):
-        link_nsr, link_fit_params = cfm.calc_NSR_link(
+        link_nsr, link_fit_params, eta_spm, eta_xpm, eta_fwm, link_nsr_ase = cfm.calc_NSR_link(
             setup,
             float(span_count_per_edge[i]),
             occupancy_matrix[i, :, None],
@@ -182,6 +186,10 @@ def compute_scaled_graph_throughput(
         link_nsr = link_nsr.squeeze(-1)
         if save_snr_to_disk:
             fit_params_per_link[i] = np.asarray(link_fit_params.squeeze(-1))
+            eta_spm_per_link[i] = np.asarray(eta_spm, dtype=np.float64).reshape(-1)
+            eta_xpm_per_link[i] = np.asarray(eta_xpm, dtype=np.float64).reshape(-1)
+            eta_fwm_per_link[i] = np.asarray(eta_fwm, dtype=np.float64).reshape(-1)
+            nsr_ase_per_link[i] = np.asarray(link_nsr_ase.squeeze(-1), dtype=np.float64)
         nsr_link_channel = nsr_link_channel.at[i].set(link_nsr)
 
     if save_snr_to_disk:
@@ -206,6 +214,11 @@ def compute_scaled_graph_throughput(
             valid = occ & np.isfinite(ln) & (ln > 0)
             snr_dB[valid] = 10.0 * np.log10(1.0 / ln[valid])
 
+            ln_ase = nsr_ase_per_link[i]
+            snr_ase_dB = np.full_like(ln_ase, np.nan)
+            valid_ase = occ & np.isfinite(ln_ase) & (ln_ase > 0)
+            snr_ase_dB[valid_ase] = 10.0 * np.log10(1.0 / ln_ase[valid_ase])
+
             fp = fit_params_per_link[i]
             u, v = edges[i]
             fname = (
@@ -219,6 +232,11 @@ def compute_scaled_graph_throughput(
                 occupancy=occ.astype(int),
                 snr_dB=snr_dB,
                 nsr_linear=ln,
+                nsr_ase_linear=ln_ase,
+                snr_ase_dB=snr_ase_dB,
+                eta_spm_linear=eta_spm_per_link[i],
+                eta_xpm_linear=eta_xpm_per_link[i],
+                eta_fwm_linear=eta_fwm_per_link[i],
                 edge=np.array([u, v]),
                 spans=float(span_count_per_edge[i]),
                 a=fp[:, 0],
@@ -287,13 +305,14 @@ if __name__ == "__main__":
     #CORONET_CONUS_Topology_nodes JPN25 BT22 DTAG germany50 nobel-eu RegularDCI NSFNET cost266
 
     # One topology (str) or several (list/tuple), e.g. ["RegularDCI", "DTAG", "germany50"]
-    # TOPOLOGY = "BT22"
-    TOPOLOGY = ["BT22","RegularDCI", "DTAG", "NSFNET"]
+    TOPOLOGY = "NSFNET"
+    # TOPOLOGY = ["BT22","RegularDCI", "DTAG", "NSFNET"]
     ROUTE_FUNCTION = "FF-kSP" #
     # If True: write per-link SNR .npz, *_occupancy.npz under data/snr/ and print confirmation.
     SAVE_SNR_TO_DISK = False
     BAND = "C"  # C | CL | SCL | ESCL | OESCL | O|E|S|L
-    SCALES = "0.2,0.4,0.6,0.8,1.0"
+    # SCALES = "0.2,0.4,0.6,0.8,1.0"
+    SCALES = "1.0"
     # SCALES = "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0"
 
     SPAN_LENGTH_KM = 80.0

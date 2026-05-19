@@ -9,7 +9,7 @@ if __name__ == "__main__":
     # Band Selection Configuration
     # ============================================================
     # Keys match ``compute_throughput_cfm.BAND_CONFIGS`` (O, E, S, C, L, CL, SCL, ESCL, OESCL).
-    BAND_SELECTION = "OESCL"  # Change this to select different bands
+    BAND_SELECTION = "C"  # Change this to select different bands
 
     _CR_RAMAN = 0.028 / 1e3 / 1e12  # same as legacy CL / SCL / multi-band entries
 
@@ -175,7 +175,7 @@ if __name__ == "__main__":
 
     # nsfnet_graph = nt.Database.read_topology_dataset_list("Topology_Data", "real", "ILP RWA assignment",
     #                                                       find_dic={"name": "NSFNET"}, node_data=True)
-    graph_list = nt.Database.read_topology_dataset_list(db, collection, find_dic={"name": "LondonDCI"},
+    graph_list = nt.Database.read_topology_dataset_list(db, collection, find_dic={"name": "RegularDCI"},
                                                         node_data=True)
     #  CORONET_CONUS_Topology_nodes
     # CORONET_CONUS_Topology_nodes DTAG germany50 nobel-eu RegularDCI JPN25  NSFNET cost266

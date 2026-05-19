@@ -155,12 +155,13 @@ def _compute_nsr_scales(setup, occupancy_matrix, ch_idx_oband_active, span_count
     for span_counts_scale in np.asarray(span_counts_scales, dtype=np.float64):
         nsr_rows = []
         for nspans, occ_row in zip(span_counts_scale, occupancy_np):
-            link_nsr = cfm.calc_NSR_link(
+            link_nsr, *_ = cfm.calc_NSR_link(
                 setup,
                 float(nspans),
                 occ_row[:, None],
                 ch_idx_oband_active_np,
-            ).squeeze(-1)
+            )
+            link_nsr = link_nsr.squeeze(-1)
             nsr_rows.append(np.asarray(link_nsr, dtype=np.float64))
         nsr_scales.append(np.stack(nsr_rows, axis=0))
 

@@ -58,6 +58,7 @@ from jax.numpy import (
     exp, log, abs, arcsinh, arctan, nan_to_num,
 )
 from scipy.constants import c, pi
+from scipy.optimize import least_squares as scipy_least_squares
 
 # ---------------------------------------------------------------------------
 # Path setup  (must come before local imports)
@@ -254,19 +255,30 @@ def _build_per_channel_params(ch_lambda, band_masks, active_bands,
 
 
 def _build_setup(span_length_km, ch_lambda, channel_idx, P_channel, nf,
-                 snr_trx, ref_lambda, fibre_type='min', gamma_val=2):
+                 snr_trx, ref_lambda, fibre_type='min', n2_m2_per_w=30.6e-21):
     """Build DynPowerSystemSetup matching cfm_network.ipynb cell 7.
+
+    Nonlinear coefficient: ``gamma = 2*pi/lambda * n2/A_eff`` (same structure as
+    ``load_ferreira_28_gamma``).  Stored values are **1/(W*m)** for
+    ``nonlinear_coeff_profile``, as expected by ONG (see
+    ``FibreSpanSetup.plot_nonlinear_coeff``, which scales by 1e3 for 1/(W*km) plots).
 
     Parameters
     ----------
     ref_lambda : float
         Reference wavelength [m] for dispersion Taylor expansion.
         Typically the midpoint of the active band range.
+    n2_m2_per_w : float
+        Nonlinear index n2 [m^2/W] (default 30.6e-21, silica-scale).
     """
     lambda_active = ch_lambda[channel_idx]
     lambda_upper = float(max(lambda_active))
     lambda_lower = float(min(lambda_active))
     dispersion_fit_wavelength = jnp.array([lambda_lower, ref_lambda, lambda_upper])
+
+    ch_lambda_jnp = jnp.asarray(ch_lambda, dtype=jnp.float64)
+    aeff_m2 = jnp.array(fibre_data.A_eff_at(fibre_type, ch_lambda_jnp)) * 1e-12
+    gamma_per_m = (2 * jnp.pi) / ch_lambda_jnp * (n2_m2_per_w / aeff_m2)
 
     fibre_span = FibreSpanSetupAdvanced(
         length=f'{span_length_km}km',
@@ -276,8 +288,8 @@ def _build_setup(span_length_km, ch_lambda, channel_idx, P_channel, nf,
         attenuation_profile=fibre_data.fit_attenuation(fibre_type),
         raman_profile=load_corning_smf_28_raman(),
         dispersion_profile=fibre_data.get_dispersion(fibre_type),
-        effective_area_profile=(jnp.array([1310e-9, 1550e-9]), jnp.array([66.476e-12, 86.59e-12])),
-        nonlinear_coeff_profile=(jnp.array([1310e-9]), jnp.array([gamma_val * 1e-3])),
+        effective_area_profile=(ch_lambda_jnp, aeff_m2),
+        nonlinear_coeff_profile=(ch_lambda_jnp, gamma_per_m),
     )
 
     setup = DynPowerSystemSetup(
@@ -302,110 +314,103 @@ def _build_setup(span_length_km, ch_lambda, channel_idx, P_channel, nf,
 
 
 # ===========================================================================
-# [Change D] get_power_profile_fit_d — fixed kickstart channel selection
+# [Change D] get_power_profile_fit_d — semi-analytical fit (signed residual, no f_k centering)
 # ===========================================================================
 def get_power_profile_fit_d(
         length_j,
         power_evo_j,
         ch_centre_ij,
+        ref_lambda,
+        ch_power_W_ij,
         attenuation_ij,
         raman_gain_slope_j,
+        zspan,
         j=0,
-        zspan=None,
-        **kwargs
+        **kwargs,
 ):
-    """Fit ISRS power profile [a, a_bar, Cr] with bounded scale factors.
+    """Fit semi-analytical ISRS power profile parameters [a, a_bar, Cr].
 
-    Optimises ``scale = [s_a, s_abar, s_Cr]`` so that physical params are
-    ``a = s_a * a_ref``, ``a_bar = s_abar * a_ref``, ``Cr = s_Cr * Cr_ref``.
-
-    Scale bounds (cf. ``cfm_nli.get_power_profile_fit``):
-      * s_a, s_abar  in [0.1, 10]
-      * s_Cr         in [0.5,  2]
-
-    Kickstart channel is the occupied channel closest to the spectral
-    midpoint (median frequency).
+    Returns
+    -------
+    params : ndarray, shape (num_ch, 3)
+        Columns are [a, a_bar, Cr].
     """
-    from scipy.optimize import least_squares as _least_squares
+    _ = ref_lambda  # reserved if enabling fc = c / ref_lambda for f_k below
 
     neper = np.log(10) / 10.0
     l = float(length_j[j])
-    if zspan is None:
-        zspan_np = np.linspace(0, l, int(l / 1000) + 1)
-    else:
-        zspan_np = np.asarray(zspan, dtype=float)
-    num_ch = power_evo_j.shape[2]
+    num_ch = ch_power_W_ij.shape[0]
+
+    att_profile = np.asarray(attenuation_ij[:, j], dtype=float) * neper
+    att_profile_min = np.nanmin(att_profile)
+    leff_min = (1.0 - np.exp(-att_profile_min * l)) / att_profile_min
+
+    z_fit = np.arange(0.0, leff_min + 1e-12, 1000.0)
 
     true_prof = np.asarray(power_evo_j[j, :, :], dtype=float).copy()
     true_prof = true_prof / true_prof[0:1, :]
-    valid_mask = ~np.isnan(true_prof[0, :])
-    valid_idx = np.where(valid_mask)[0]
 
-    a_ref = float(np.nanmean(attenuation_ij[:, j]) * neper)
-    P = float(np.asarray(power_evo_j[j, 0]).sum())
-    Cr_ref = float(raman_gain_slope_j[j])
+    zspan_np = np.asarray(zspan)
+    nfit = min(len(z_fit), true_prof.shape[0], len(zspan_np))
+    z_fit = z_fit[:nfit]
+    p_actual = true_prof[:nfit, :]
 
-    ch_freq = np.asarray(ch_centre_ij[:, j], dtype=float)
+    launch_power = np.asarray(ch_power_W_ij[:, j], dtype=float)
+    valid_idx = np.where(launch_power != 0)[0]
+    Ptot = np.nansum(launch_power)
 
-    def _rho(scale, f_i):
-        a = scale[0] * a_ref
-        a_bar = scale[1] * a_ref
-        Cr = scale[2] * Cr_ref
-        Ti = (P * Cr / a_bar) * f_i
-        return (1 + Ti) * np.exp(-a * zspan_np) - Ti * np.exp(-(a + a_bar) * zspan_np)
+    f_k = np.asarray(ch_centre_ij[:, j], dtype=float)
+    # fc = np.nanmean(f_k[valid_idx]) if len(valid_idx) else 0.0
+    # fc = c / ref_lambda
+    # f_k = f_k - fc
 
-    def _residual(scale, i):
-        return _rho(scale, ch_freq[i]) - true_prof[:, i]
-
-    # --- Kickstart: occupied channel closest to median frequency ---
-    freqs_valid = ch_freq[valid_idx]
-    median_freq = float(np.median(freqs_valid))
-    best_pos = int(np.argmin(np.abs(freqs_valid - median_freq)))
-    kickstart_ch = int(valid_idx[best_pos])
+    Cr0_global = float(raman_gain_slope_j[j])
+    Att0_global = float(np.nanmean(att_profile))
 
     params = np.full((num_ch, 3), np.nan, dtype=float)
-    prev_scale = np.array([1.0, 1.0, 1.0])
-    lb = np.array([0.1, 0.1, 0.5])
-    ub = np.array([10.0, 10.0, 2.0])
 
-    res = _least_squares(
-        _residual, x0=prev_scale, args=(kickstart_ch,),
-        bounds=(lb, ub), ftol=1e-15, xtol=1e-15, gtol=1e-15, max_nfev=int(1e3),
-    )
-    prev_scale = res.x.copy()
-    params[kickstart_ch, :] = [
-        res.x[0] * a_ref / neper,
-        res.x[1] * a_ref / neper,
-        res.x[2] * Cr_ref,
-    ]
+    def L_eff(a_bar):
+        return (1.0 - np.exp(-a_bar * z_fit)) / a_bar
+
+    def p_fit(a, a_bar, Cr, fki):
+        return np.exp(-a * z_fit) * (1.0 - Cr * Ptot * L_eff(a_bar) * fki)
 
     for i in valid_idx:
-        if i == kickstart_ch:
-            continue
-        res = _least_squares(
-            _residual, x0=prev_scale, args=(int(i),),
-            bounds=(lb, ub), ftol=1e-15, xtol=1e-15, gtol=1e-15, max_nfev=int(1e3),
+        p_i = p_actual[:, i]
+
+        a_ref = Att0_global
+        a_bar_ref = float(att_profile[i])
+        Cr_ref = Cr0_global
+
+        def residual(scale):
+            a = scale[0] * a_ref
+            a_bar = scale[1] * a_bar_ref
+            Cr = scale[2] * Cr_ref
+            return p_fit(a, a_bar, Cr, f_k[i]) - p_i
+
+        res = scipy_least_squares(
+            residual,
+            x0=np.array([1.0, 1.0, 1.0], dtype=float),
+            bounds=(
+                np.array([0.1, 0.1, 0.5], dtype=float),
+                np.array([10.0, 10.0, 2.0], dtype=float),
+            ),
+            ftol=1e-15,
+            xtol=1e-15,
+            gtol=1e-15,
+            max_nfev=int(1e3),
+            method="trf",
         )
-        prev_scale = res.x.copy()
-        params[i, :] = [
-            res.x[0] * a_ref / neper,
-            res.x[1] * a_ref / neper,
-            res.x[2] * Cr_ref,
-        ]
+
+        scale = res.x
+        a = scale[0] * a_ref
+        a_bar = scale[1] * a_bar_ref
+        Cr = scale[2] * Cr_ref
+
+        params[i, :] = [a, a_bar, Cr]
 
     return jnp.array(params)
-    """Fit ISRS power profile [a, a_bar, Cr] — JAX LM with clamped bounds.
 
-    Same Semrau model and JAX vmap structure as ong library, but with:
-
-    1. Fixed kickstart: occupied channel closest to median frequency.
-    2. Bounded reparameterisation via ``clamp + exp``:
-       - ``s_a   = exp(clamp(raw[0], lo_a, hi_a))``   → scale in [0.1, 10]
-       - ``s_ab  = exp(clamp(raw[1], lo_ab, hi_ab))``  → scale in [0.1, 10]
-       - ``s_Cr  = clamp(raw[2], 0.5, 2.0)``           → scale in [0.5, 2]
-
-       Bounds match ``cfm_nli.get_power_profile_fit``.
-    """
 
 # ===========================================================================
 # [Change D2] get_power_profile_fit_d_2 — JAX LM with clamped scale bounds
@@ -491,6 +496,96 @@ def get_power_profile_fit_d_2(
 
 
 # ===========================================================================
+# [Change D3] get_power_profile_fit_d_3 — exact copy of cfm_nli.get_power_profile_fit
+# ===========================================================================
+def get_power_profile_fit_d_3(
+    length_j,
+    power_evo_j,
+    ch_centre_ij,
+    ch_power_W_ij,
+    attenuation_ij,
+    raman_gain_slope_j,
+    zspan,
+    j=0,
+    **kwargs,
+):
+    """Fit semi-analytical ISRS power profile parameters [a, a_bar, Cr].
+
+    Logic identical to ``cfm_nli.get_power_profile_fit`` (NumPy + scipy).
+    """
+    neper = np.log(10) / 10.0
+    l = float(length_j[j])
+    num_ch = ch_power_W_ij.shape[0]
+
+    att_profile = np.asarray(attenuation_ij[:, j], dtype=float) * neper
+    att_profile_min = np.nanmin(att_profile)
+    leff_min = (1.0 - np.exp(-att_profile_min * l)) / att_profile_min
+
+    z_fit = np.arange(0.0, leff_min + 1e-12, 1000.0)
+
+    true_prof = np.asarray(power_evo_j[j, :, :], dtype=float).copy()
+    true_prof = true_prof / true_prof[0:1, :]
+
+    zspan_np = np.asarray(zspan)
+    nfit = min(len(z_fit), true_prof.shape[0], len(zspan_np))
+    z_fit = z_fit[:nfit]
+    p_actual = true_prof[:nfit, :]
+
+    launch_power = np.asarray(ch_power_W_ij[:, j], dtype=float)
+    valid_idx = np.where(launch_power != 0)[0]
+    Ptot = np.nansum(launch_power)
+
+    f_k = np.asarray(ch_centre_ij[:, j], dtype=float)
+    fc = np.nanmean(f_k[valid_idx]) if len(valid_idx) else 0.0
+    f_k = f_k - fc
+
+    Cr0_global = float(raman_gain_slope_j[j])
+    Att0_global = float(np.nanmean(att_profile))
+
+    params = np.full((num_ch, 3), np.nan, dtype=float)
+
+    def L_eff(a_bar):
+        return (1.0 - np.exp(-a_bar * z_fit)) / a_bar
+
+    def p_fit(a, a_bar, Cr, fki):
+        return np.exp(-a * z_fit) * (1.0 - Cr * Ptot * L_eff(a_bar) * fki)
+
+    for i in valid_idx:
+        p_i = p_actual[:, i]
+
+        a_ref = Att0_global
+        a_bar_ref = float(att_profile[i])
+        Cr_ref = Cr0_global
+
+        def residual(scale):
+            a = scale[0] * a_ref
+            a_bar = scale[1] * a_bar_ref
+            Cr = scale[2] * Cr_ref
+            return np.abs(p_fit(a, a_bar, Cr, f_k[i]) - p_i)
+
+        res = scipy_least_squares(
+            residual,
+            x0=np.array([1.0, 1.0, 1.0], dtype=float),
+            bounds=(
+                np.array([0.1, 0.1, 0.5], dtype=float),
+                np.array([10.0, 10.0, 2.0], dtype=float),
+            ),
+            ftol=1e-15,
+            xtol=1e-15,
+            gtol=1e-15,
+            max_nfev=int(1e3),
+        )
+
+        scale = res.x
+        a = scale[0] * a_ref
+        a_bar = scale[1] * a_bar_ref
+        Cr = scale[2] * Cr_ref
+        params[i, :] = [a, a_bar, Cr]
+
+    return jnp.array(params)
+
+
+# ===========================================================================
 # [Change 5/6/7] calc_NSR_link — per-link NLI with occupancy mask,
 # ISRS-based ASE, and transceiver SNR penalty.
 # Ported from cfm_network.ipynb cell 8.
@@ -518,10 +613,19 @@ def calc_NSR_link(setup, Nspans, mask, ch_idx_oband=None):
     Returns
     -------
     nsr : ndarray (num_active_channels, 1)
+    fit_params : ndarray
+        Per-channel fit parameters from ISRS profile (shape as today).
+    eta_spm, eta_xpm, eta_fwm : ndarray (num_active_channels,)
+        GN closed-form NLI efficiency factors before ``Nspans * P_i**2`` scaling
+        (same ordering as ``occupancy`` / ``channel_index`` in saved ``link*.npz``).
+    nsr_ase : ndarray (num_active_channels, 1)
+        ASE-only linear NSR contribution ``P_ASE / P_sig`` on occupied channels;
+        ``nan`` where the mask is zero (idle λ).
     """
     j = 0
     chs = setup.channel_idx
     gamma_i = jnp.array(setup.spans[j].nonlinear_coeff_at(setup.ch_lambda_ij[chs, j]))
+
     beta2_j = jnp.array([setup.spans[j].beta2])
     beta3_j = jnp.array([setup.spans[j].beta3])
     beta4_j = jnp.array([setup.spans[j].beta4])
@@ -545,14 +649,17 @@ def calc_NSR_link(setup, Nspans, mask, ch_idx_oband=None):
         zspan=z,
     )
 
-    fit_params = get_power_profile_fit_d_2(
+    # Slice to active channels so fit rows align with power_evo columns (cfm_nli-style fit).
+    _act = np.flatnonzero(np.asarray(chs))
+    fit_params = get_power_profile_fit_d_3(
         length_j=setup.length_j,
-        power_evo_j=power_evo[None, :, :],
-        ch_centre_ij=setup.ch_centre_ij,
-        ch_power_W_ij=ch_power_W_i,
-        attenuation_ij=setup.attenuation_ij,
-        raman_gain_slope_j=setup.raman_gain_slope_j,
-        zspan=z,
+        power_evo_j=np.asarray(power_evo)[None, :, :],
+        ch_centre_ij=np.asarray(setup.ch_centre_ij)[_act, :],
+        ref_lambda=float(setup.ref_lambda),
+        ch_power_W_ij=np.asarray(ch_power_W_i),
+        attenuation_ij=np.asarray(setup.attenuation_ij)[_act, :],
+        raman_gain_slope_j=np.asarray(setup.raman_gain_slope_j),
+        zspan=np.asarray(z),
     )[:, :, None]
 
     a = fit_params[:, 0]
@@ -655,50 +762,53 @@ def calc_NSR_link(setup, Nspans, mask, ch_idx_oband=None):
         return jax.vmap(_fun)(_INDICES).sum(axis=0)
 
     # --- FWM index builder ---
+
     def _FWM_idx(f):
-        freqs = f.squeeze()
-        n = freqs.size
+        freqs = np.asarray(f).squeeze()
+        n = len(freqs)
+
+        ch_spacing = np.median(np.abs(np.diff(freqs)))
+
+        grid = np.rint((freqs - freqs[0]) / ch_spacing).astype(np.int64)
+        pos = {g: idx for idx, g in enumerate(grid)}
+
         all_idx = []
         counts = []
 
         for i in range(n):
-            fi_val = freqs[i]
-            j_idx, k_idx = jnp.meshgrid(jnp.arange(n), jnp.arange(n), indexing="ij")
-            j_idx = j_idx.ravel()
-            k_idx = k_idx.ravel()
-            target_m = freqs[j_idx] + freqs[k_idx] - fi_val
-            matches = target_m[:, None] == freqs[None, :]
-            has_match = jnp.any(matches, axis=1)
-            m_idx = jnp.argmax(matches, axis=1)
-            valid = (
-                has_match
-                & (j_idx != i)
-                & (k_idx != m_idx)
-                & (k_idx != i)
-                & (j_idx != m_idx)
-                & (j_idx <= k_idx)
-            )
-            idx_i = jnp.stack([
-                jnp.full_like(j_idx[valid], i),
-                j_idx[valid], k_idx[valid], m_idx[valid],
-            ], axis=-1)
+            idx_i = []
+
+            for j in range(n):
+                for k in range(n):
+                    target = grid[j] + grid[k] - grid[i]
+                    m = pos.get(target)
+
+                    if m is None:
+                        continue
+
+                    if (
+                        j != i
+                        and k != m
+                        and k != i
+                        and j != m
+                        and j <= k
+                    ):
+                        idx_i.append([i, j, k, m])
+
+            idx_i = np.asarray(idx_i, dtype=np.int32)
             all_idx.append(idx_i)
             counts.append(idx_i.shape[0])
 
         M = max(counts) if counts else 0
-        idx_pad = []
-        valid_pad = []
-        for idx_i in all_idx:
-            pad_len = M - idx_i.shape[0]
-            idx_padded = jnp.pad(idx_i, ((0, pad_len), (0, 0)))
-            valid_mask = jnp.concatenate([
-                jnp.ones(idx_i.shape[0], dtype=bool),
-                jnp.zeros(pad_len, dtype=bool),
-            ])
-            idx_pad.append(idx_padded)
-            valid_pad.append(valid_mask)
 
-        return jnp.stack(idx_pad, axis=0), jnp.stack(valid_pad, axis=0)
+        idx_pad = np.zeros((n, M, 4), dtype=np.int32)
+        valid = np.zeros((n, M), dtype=bool)
+
+        for i, idx_i in enumerate(all_idx):
+            idx_pad[i, :idx_i.shape[0]] = idx_i
+            valid[i, :idx_i.shape[0]] = True
+
+        return jnp.asarray(idx_pad), jnp.asarray(valid)
 
     # --- FWM ---
     @jax.jit
@@ -860,13 +970,13 @@ def calc_NSR_link(setup, Nspans, mask, ch_idx_oband=None):
         _eta_FWM = jnp.zeros_like(_eta_XPM)
         _eta_FWM = _eta_FWM.at[ch_idx_oband].set(
             _eta_GN_FWM(Ptot, P_i[ch_idx_oband], beta2_j[j], beta3_j[j], beta4_j[j],
-                        a_i[ch_idx_oband], a_i[ch_idx_oband], f_i[ch_idx_oband],
+                        a_i[ch_idx_oband], a_bar_i[ch_idx_oband], f_i[ch_idx_oband],
                         B_i[ch_idx_oband], Cr_i[ch_idx_oband],
                         gamma_ij[ch_idx_oband, j], setup.length_j[j], idx_pad, valid))
     elif ch_idx_oband is None:
         idx_pad, valid = _FWM_idx(f_i)
         _eta_FWM = _eta_GN_FWM(Ptot, P_i, beta2_j[j], beta3_j[j], beta4_j[j],
-                                a_i, a_i, f_i, B_i, Cr_i,
+                                a_i, a_bar_i, f_i, B_i, Cr_i,
                                 gamma_ij[:, j], setup.length_j[j], idx_pad, valid)
     else:
         _eta_FWM = jnp.zeros_like(_eta_XPM)
@@ -902,7 +1012,11 @@ def calc_NSR_link(setup, Nspans, mask, ch_idx_oband=None):
     term_ase = p_ASE[:, None] / safe_P
     nsr_active = term_nli + term_ase + trx_pen
     nsr = jnp.where(occ, nsr_active, jnp.inf)
-    return nsr, fit_params
+    nsr_ase = jnp.where(occ, term_ase, jnp.nan)
+    eta_spm = jnp.reshape(jnp.asarray(_eta_SPM, dtype=jnp.float64), (-1,))
+    eta_xpm = jnp.reshape(jnp.asarray(_eta_XPM, dtype=jnp.float64), (-1,))
+    eta_fwm = jnp.reshape(jnp.asarray(_eta_FWM, dtype=jnp.float64), (-1,))
+    return nsr, fit_params, eta_spm, eta_xpm, eta_fwm, nsr_ase
 
 
 # ===========================================================================
@@ -1108,20 +1222,28 @@ def compute_topology_throughput(
     # --- [Change] Compute per-link NSR with occupancy ---
     nsr_link_channel = jnp.zeros_like(jnp.asarray(occupancy_matrix), dtype=jnp.float64)
     fit_params_per_link = {}
+    eta_spm_per_link: dict[int, np.ndarray] = {}
+    eta_xpm_per_link: dict[int, np.ndarray] = {}
+    eta_fwm_per_link: dict[int, np.ndarray] = {}
+    nsr_ase_per_link: dict[int, np.ndarray] = {}
 
     n_links = int(span_count_per_edge.shape[0])
     print(f"    Undirected links in topology: {n_links} (Link indices 0..{n_links - 1})")
 
     for i in range(n_links):
         t0 = time.perf_counter()
-        link_nsr, link_fit_params = calc_NSR_link(
+        link_nsr, link_fit_params, eta_spm, eta_xpm, eta_fwm, link_nsr_ase = calc_NSR_link(
             setup,
             float(span_count_per_edge[i]),
             occupancy_matrix[i, :, None],
             ch_idx_oband_active,
         )
         link_nsr = link_nsr.squeeze(-1)
+        nsr_ase_per_link[i] = np.asarray(link_nsr_ase.squeeze(-1), dtype=np.float64)
         fit_params_per_link[i] = np.asarray(link_fit_params.squeeze(-1))
+        eta_spm_per_link[i] = np.asarray(eta_spm, dtype=np.float64).reshape(-1)
+        eta_xpm_per_link[i] = np.asarray(eta_xpm, dtype=np.float64).reshape(-1)
+        eta_fwm_per_link[i] = np.asarray(eta_fwm, dtype=np.float64).reshape(-1)
         nsr_link_channel = nsr_link_channel.at[i].set(link_nsr)
         dt = time.perf_counter() - t0
         occ = occupancy_matrix[i] > 0
@@ -1154,6 +1276,11 @@ def compute_topology_throughput(
             valid = occ & np.isfinite(ln) & (ln > 0)
             snr_dB[valid] = 10.0 * np.log10(1.0 / ln[valid])
 
+            ln_ase = nsr_ase_per_link[i]
+            snr_ase_dB = np.full_like(ln_ase, np.nan)
+            valid_ase = occ & np.isfinite(ln_ase) & (ln_ase > 0)
+            snr_ase_dB[valid_ase] = 10.0 * np.log10(1.0 / ln_ase[valid_ase])
+
             fp = fit_params_per_link[i]
             u, v = edges[i]
             fname = f"{_id}_{band_selection}_{route_function}_link{i}_{u}-{v}.npz"
@@ -1165,6 +1292,11 @@ def compute_topology_throughput(
                 occupancy=occ.astype(int),
                 snr_dB=snr_dB,
                 nsr_linear=ln,
+                nsr_ase_linear=ln_ase,
+                snr_ase_dB=snr_ase_dB,
+                eta_spm_linear=eta_spm_per_link[i],
+                eta_xpm_linear=eta_xpm_per_link[i],
+                eta_fwm_linear=eta_fwm_per_link[i],
                 edge=np.array([u, v]),
                 spans=float(span_count_per_edge[i]),
                 a=fp[:, 0],
@@ -1361,7 +1493,7 @@ if __name__ == "__main__":
     # ================================================================
     # If True: write per-link SNR .npz, *_occupancy.npz under data/snr/ and print confirmation.
     SAVE_SNR_TO_DISK = True
-    BAND_SELECTION = "SCL"
+    BAND_SELECTION = "OESCL"
     ROUTE_FUNCTION = "kSP-FF"
     TOPOLOGY_NAME = "NSFNET"
     # CORONET_CONUS_Topology_nodes DTAG germany50 nobel-eu RegularDCI JPN25  NSFNET cost266

@@ -521,6 +521,12 @@ def calc_NSR_link(setup, Nspans, mask, ch_idx_oband=None):
     Returns
     -------
     nsr : ndarray (num_active_channels, 1)
+    fit_params : ndarray
+        Per-channel fit parameters from ISRS profile (shape as today).
+    eta_spm, eta_xpm, eta_fwm : ndarray (num_active_channels,)
+        GN closed-form NLI efficiency factors before ``Nspans * P_i**2`` scaling.
+    nsr_ase : ndarray (num_active_channels, 1)
+        ASE-only linear NSR ``P_ASE / P_sig`` on occupied channels; ``nan`` if idle.
     """
     j = 0
     chs = setup.channel_idx
@@ -863,13 +869,13 @@ def calc_NSR_link(setup, Nspans, mask, ch_idx_oband=None):
         _eta_FWM = jnp.zeros_like(_eta_XPM)
         _eta_FWM = _eta_FWM.at[ch_idx_oband].set(
             _eta_GN_FWM(Ptot, P_i[ch_idx_oband], beta2_j[j], beta3_j[j], beta4_j[j],
-                        a_i[ch_idx_oband], a_i[ch_idx_oband], f_i[ch_idx_oband],
+                        a_i[ch_idx_oband], a_bar_i[ch_idx_oband], f_i[ch_idx_oband],
                         B_i[ch_idx_oband], Cr_i[ch_idx_oband],
                         gamma_ij[ch_idx_oband, j], setup.length_j[j], idx_pad, valid))
     elif ch_idx_oband is None:
         idx_pad, valid = _FWM_idx(f_i)
         _eta_FWM = _eta_GN_FWM(Ptot, P_i, beta2_j[j], beta3_j[j], beta4_j[j],
-                                a_i, a_i, f_i, B_i, Cr_i,
+                                a_i, a_bar_i, f_i, B_i, Cr_i,
                                 gamma_ij[:, j], setup.length_j[j], idx_pad, valid)
     else:
         _eta_FWM = jnp.zeros_like(_eta_XPM)
@@ -905,7 +911,11 @@ def calc_NSR_link(setup, Nspans, mask, ch_idx_oband=None):
     term_ase = p_ASE[:, None] / safe_P
     nsr_active = term_nli + term_ase + trx_pen
     nsr = jnp.where(occ, nsr_active, jnp.inf)
-    return nsr, fit_params
+    nsr_ase = jnp.where(occ, term_ase, jnp.nan)
+    eta_spm = jnp.reshape(jnp.asarray(_eta_SPM, dtype=jnp.float64), (-1,))
+    eta_xpm = jnp.reshape(jnp.asarray(_eta_XPM, dtype=jnp.float64), (-1,))
+    eta_fwm = jnp.reshape(jnp.asarray(_eta_FWM, dtype=jnp.float64), (-1,))
+    return nsr, fit_params, eta_spm, eta_xpm, eta_fwm, nsr_ase
 
 
 # ===========================================================================
@@ -1113,20 +1123,28 @@ def compute_topology_throughput(
     # --- [Change] Compute per-link NSR with occupancy ---
     nsr_link_channel = jnp.zeros_like(jnp.asarray(occupancy_matrix), dtype=jnp.float64)
     fit_params_per_link = {}
+    eta_spm_per_link: dict[int, np.ndarray] = {}
+    eta_xpm_per_link: dict[int, np.ndarray] = {}
+    eta_fwm_per_link: dict[int, np.ndarray] = {}
+    nsr_ase_per_link: dict[int, np.ndarray] = {}
 
     n_links = int(span_count_per_edge.shape[0])
     print(f"    Undirected links in topology: {n_links} (Link indices 0..{n_links - 1})")
 
     for i in range(n_links):
         t0 = time.perf_counter()
-        link_nsr, link_fit_params = calc_NSR_link(
+        link_nsr, link_fit_params, eta_spm, eta_xpm, eta_fwm, link_nsr_ase = calc_NSR_link(
             setup,
             float(span_count_per_edge[i]),
             occupancy_matrix[i, :, None],
             ch_idx_oband_active,
         )
         link_nsr = link_nsr.squeeze(-1)
+        nsr_ase_per_link[i] = np.asarray(link_nsr_ase.squeeze(-1), dtype=np.float64)
         fit_params_per_link[i] = np.asarray(link_fit_params.squeeze(-1))
+        eta_spm_per_link[i] = np.asarray(eta_spm, dtype=np.float64).reshape(-1)
+        eta_xpm_per_link[i] = np.asarray(eta_xpm, dtype=np.float64).reshape(-1)
+        eta_fwm_per_link[i] = np.asarray(eta_fwm, dtype=np.float64).reshape(-1)
         nsr_link_channel = nsr_link_channel.at[i].set(link_nsr)
         dt = time.perf_counter() - t0
         occ = occupancy_matrix[i] > 0
@@ -1159,6 +1177,11 @@ def compute_topology_throughput(
             valid = occ & np.isfinite(ln) & (ln > 0)
             snr_dB[valid] = 10.0 * np.log10(1.0 / ln[valid])
 
+            ln_ase = nsr_ase_per_link[i]
+            snr_ase_dB = np.full_like(ln_ase, np.nan)
+            valid_ase = occ & np.isfinite(ln_ase) & (ln_ase > 0)
+            snr_ase_dB[valid_ase] = 10.0 * np.log10(1.0 / ln_ase[valid_ase])
+
             fp = fit_params_per_link[i]
             u, v = edges[i]
             fname = f"{_id}_{band_selection}_{route_function}_link{i}_{u}-{v}.npz"
@@ -1170,6 +1193,11 @@ def compute_topology_throughput(
                 occupancy=occ.astype(int),
                 snr_dB=snr_dB,
                 nsr_linear=ln,
+                nsr_ase_linear=ln_ase,
+                snr_ase_dB=snr_ase_dB,
+                eta_spm_linear=eta_spm_per_link[i],
+                eta_xpm_linear=eta_xpm_per_link[i],
+                eta_fwm_linear=eta_fwm_per_link[i],
                 edge=np.array([u, v]),
                 spans=float(span_count_per_edge[i]),
                 a=fp[:, 0],

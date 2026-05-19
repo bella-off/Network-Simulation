@@ -116,7 +116,7 @@ def _eval_link(active_bands, band_power_dBm, nspans, span_length_km,
         ref_lambda=ref_lambda,
     )
     mask = np.ones((num_active, 1), dtype=int)
-    nsr,_ = cfm.calc_NSR_link(setup, nspans, mask, ch_idx_oband_active)
+    nsr, *_ = cfm.calc_NSR_link(setup, nspans, mask, ch_idx_oband_active)
     return np.asarray(nsr).squeeze()
 
 
@@ -148,7 +148,7 @@ def sweep_single_band(active_bands, target_band, default_powers,
                       nspans, span_length_km,
                       ch_lambda, channel_idx, ch_idx_oband_full,
                       band_masks, ref_lambda,
-                      power_range_dBm=(-6, 4), steps=21):
+                      power_range_dBm=(-6, 2), steps=21):
     """Sweep one band's power, keeping others at default."""
     powers = np.linspace(power_range_dBm[0], power_range_dBm[1], steps)
     results = []
@@ -191,7 +191,7 @@ def joint_optimize(active_bands, initial_powers,
                    nspans, span_length_km,
                    ch_lambda, channel_idx, ch_idx_oband_full,
                    band_masks, ref_lambda,
-                   bounds_dBm=(-6, 4)):
+                   bounds_dBm=(-6, 2)):
     """L-BFGS-B on total capacity (negative, for minimisation)."""
     band_list = [b for b in ALL_BANDS if b in active_bands]
     x0 = np.array([initial_powers[b] for b in band_list])
@@ -273,9 +273,9 @@ def main():
     parser.add_argument("--bands", type=str, default="OESCL",
                         choices=list(cfm.BAND_CONFIGS.keys()),
                         help="Band selection (default OESCL)")
-    parser.add_argument("--default_power", type=float, default=-2.0,
-                        help="Default per-channel launch power [dBm] (default -2)")
-    parser.add_argument("--sweep_lo", type=float, default=-6.0,
+    parser.add_argument("--default_power", type=float, default=0.0,
+                        help="Default per-channel launch power [dBm] (default 0)")
+    parser.add_argument("--sweep_lo", type=float, default=-4.0,
                         help="Sweep lower bound [dBm]")
     parser.add_argument("--sweep_hi", type=float, default=4.0,
                         help="Sweep upper bound [dBm]")

@@ -1,0 +1,2 @@
+source_id,topology,band_user,band_resolved,route_function,rwa_key,scale,cfm_capacity_bps,cfm_capacity_tbps,cfm_lightpaths,elapsed_seconds,span_length_km,launch_power_dBm
+5f636b15439c64afe20d6f6f,NSFNET,OESCL,OESCL,FF-kSP,FF-kSP OESCL RWA,1.0,1557868445481532.0,1557.868445481532,6038,633.7189489845186,80.0,-2.0

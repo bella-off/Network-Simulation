@@ -20,7 +20,7 @@ if __name__ == "__main__":
     # Band Selection Configuration
     # ============================================================
     # Keys match ``compute_throughput_cfm.BAND_CONFIGS`` (O, E, S, C, L, CL, SCL, ESCL, OESCL).
-    BAND_SELECTION = "ESCL"  # Change this to select different bands
+    BAND_SELECTION = "C"  # Change this to select different bands
 
     _CR_RAMAN = 0.028 / 1e3 / 1e12  # same as legacy CL / SCL / multi-band entries
 
