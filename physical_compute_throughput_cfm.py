@@ -719,7 +719,7 @@ def calc_NSR_link(setup, Nspans, mask, ch_idx_oband=None):
 
             def _eta_per_ch(Ptot_val, P, beta2, beta3, beta4, a_fwm, a_bar_fwm,
                             f, B, Cr_fwm, gamma_fwm, L_val, idx_ch, valid_ch):
-                T_tilde = -((Ptot_val * Cr_fwm) / (2 * a_fwm)) * f
+                T_tilde = -((Ptot_val * Cr_fwm) / (2 * a_bar_fwm)) * f
                 T_local = 1 + T_tilde
 
                 def _eta(idx):

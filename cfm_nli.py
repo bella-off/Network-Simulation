@@ -323,7 +323,7 @@ def _eta_GN_FWM(
         def _eta_per_ch(
             Ptot, P, beta2, beta3, beta4, a, a_bar, f, B, Cr, gamma, L, idx_ch, valid_ch
         ):
-            T_tilde = -((Ptot * Cr) / (2 * a)) * f
+            T_tilde = -((Ptot * Cr) / (2 * a_bar)) * f
             T = 1 + T_tilde
 
             def _eta(idx):

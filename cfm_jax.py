@@ -397,7 +397,7 @@ def calc_nsr_link_purejax(prep: PreparedCFMInputs, nspans: int, mask):
                 pm = p_v[m_v]
                 gamma_iv = gamma_fwm[i_v]
 
-                tf = -((ptot_val * cr_fwm) / (2 * a_fwm)) * f_v
+                tf = -((ptot_val * cr_fwm) / (2 * a_bar_fwm)) * f_v
                 t = 1 + tf
 
                 def _island_coi(x):

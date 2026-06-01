@@ -651,7 +651,7 @@ def calc_NSR_link(setup, Nspans, mask, ch_idx_oband=None):
 
     # Slice to active channels so fit rows align with power_evo columns (cfm_nli-style fit).
     _act = np.flatnonzero(np.asarray(chs))
-    fit_params = get_power_profile_fit_d_3(
+    fit_params = get_power_profile_fit_d(
         length_j=setup.length_j,
         power_evo_j=np.asarray(power_evo)[None, :, :],
         ch_centre_ij=np.asarray(setup.ch_centre_ij)[_act, :],
@@ -1493,7 +1493,7 @@ if __name__ == "__main__":
     # ================================================================
     # If True: write per-link SNR .npz, *_occupancy.npz under data/snr/ and print confirmation.
     SAVE_SNR_TO_DISK = True
-    BAND_SELECTION = "OESCL"
+    BAND_SELECTION = "O"
     ROUTE_FUNCTION = "kSP-FF"
     TOPOLOGY_NAME = "NSFNET"
     # CORONET_CONUS_Topology_nodes DTAG germany50 nobel-eu RegularDCI JPN25  NSFNET cost266
