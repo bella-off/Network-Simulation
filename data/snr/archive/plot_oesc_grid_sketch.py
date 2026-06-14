@@ -95,10 +95,12 @@ def main() -> None:
 
     # --- Row 3: stem-style — λ vs slot (unsorted index shows grid order is not “middle chunk”) ---
     ax = axes[2]
+    colors = np.tile(gray, (NUM_CHANNELS_TOTAL, 1))
+    colors[channel_idx] = green
     ax.scatter(
         wl_nm,
         slots,
-        c=np.where(channel_idx, green, gray),
+        c=colors,
         s=8,
         marker="s",
         linewidths=0,

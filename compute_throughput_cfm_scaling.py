@@ -12,42 +12,14 @@ rounded up to a full span. Results are written to CSV (no MongoDB update).
 """
 from __future__ import annotations
 
-import os
-import ctypes
-
-cuda_lib = "/apps/cuda/cuda-13.0/lib64/libcudart.so.13"
-cupti_lib = "/apps/cuda/cuda-13.0/extras/CUPTI/lib64/libcupti.so.13"
-cudnn_lib = "/apps/cuda/cudnn-linux-x86_64-9.14.0.64_cuda13/lib/libcudnn.so.9"
-
-try:
-    ctypes.CDLL(cuda_lib)
-    ctypes.CDLL(cupti_lib)
-    ctypes.CDLL(cudnn_lib)
-except Exception as e:
-    print(f"wrong check: {e}")
-
-os.environ["XLA_FLAGS"] = (
-    "--xla_gpu_cuda_data_dir=/apps/cuda/cuda-13.0"
-    " --xla_gpu_deterministic_ops=true"
-)
-
-import jax
-print(f"Success! GPU count: {jax.device_count()}")
-print(f"Devices: {jax.devices()}")
-
 import csv
 import pathlib
 import sys
 import time
 from copy import deepcopy
 
-import networkx as nx
-import numpy as np
-from jax import numpy as jnp
-from scipy.constants import c
-
 # ---------------------------------------------------------------------------
-# Path setup (must come before local imports)
+# Path setup (must come before ong / gpu_init imports)
 # ---------------------------------------------------------------------------
 _SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
 _EXTERNAL_DIR = _SCRIPT_DIR.parents[2] / "external"
@@ -58,10 +30,21 @@ for p in (_EXTERNAL_DIR, str(_ONG_SRC)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
+from ong.utils import gpu_init
+
+import jax
+print(f"Success! GPU count: {jax.device_count()}")
+print(f"Devices: {jax.devices()}")
+
+import networkx as nx
+import numpy as np
+from jax import numpy as jnp
+from scipy.constants import c
+
 import NetworkToolkit as nt
 
 # Same-module throughput pipeline as compute_throughput_cfm.py
-import compute_throughput_cfm as cfm
+import compute_throughput_cfm_new as cfm
 
 # Legacy notebook/script band label -> keys in cfm.BAND_CONFIGS
 _BAND_ALIASES = {
@@ -104,7 +87,7 @@ def compute_scaled_graph_throughput(
     rwa,
     band_selection: str,
     span_length_km: float = 80.0,
-    launch_power_dBm: float = -2.0,
+    launch_power_dBm: float | dict = -2.0,
     save_snr_to_disk: bool = False,
     *,
     doc_id=None,
@@ -310,23 +293,37 @@ if __name__ == "__main__":
     ROUTE_FUNCTION = "FF-kSP" #
     # If True: write per-link SNR .npz, *_occupancy.npz under data/snr/ and print confirmation.
     SAVE_SNR_TO_DISK = False
-    BAND = "C"  # C | CL | SCL | ESCL | OESCL | O|E|S|L
-    # SCALES = "0.2,0.4,0.6,0.8,1.0"
-    SCALES = "1.0"
+    # One band or several comma-separated, e.g. "C" or "C,CL" or "C,CL,OESCL"
+    BAND = "C,CL,SCL,ESCL,OESCL"  # "C" | CL | SCL | ESCL | OESCL | O|E|S|L
+    SCALES = "0.2,0.4,0.6,0.8,1.0"
+    # SCALES = "1.0"
     # SCALES = "0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0"
 
     SPAN_LENGTH_KM = 80.0
-    LAUNCH_POWER_DBM = -2.0
+    # Per-band launch power [dBm] in order O, E, S, C, L.
+    # Use a single float (e.g. -2.0) for uniform launch across all bands,
+    # or a list/dict to set per-band values.
+    LAUNCH_POWER_DBM = [-1.63, -2.63, -2.25, -4.76, -4.54]
 
-    band_key = _resolve_band_selection(BAND)
-    if band_key not in cfm.BAND_CONFIGS:
-        raise ValueError(
-            f"Invalid BAND: {BAND} (resolved {band_key}). "
-            f"Options: {list(cfm.BAND_CONFIGS.keys())}; SCLO -> OESCL"
-        )
+    band_list = [b.strip() for b in str(BAND).split(",") if b.strip()]
+    if not band_list:
+        raise ValueError("BAND must contain at least one band, e.g. 'C' or 'C,CL,OESCL'")
+    for _b in band_list:
+        _bk = _resolve_band_selection(_b)
+        if _bk not in cfm.BAND_CONFIGS:
+            raise ValueError(
+                f"Invalid BAND entry: {_b} (resolved {_bk}). "
+                f"Options: {list(cfm.BAND_CONFIGS.keys())}; SCLO -> OESCL"
+            )
 
-    band_cfg = cfm.BAND_CONFIGS[band_key]
-    rwa_key = _build_band_aware_rwa_key(ROUTE_FUNCTION, BAND)
+    # Normalise list/tuple -> dict keyed by band order O,E,S,C,L
+    lp_dBm = LAUNCH_POWER_DBM
+    if isinstance(lp_dBm, (list, tuple)):
+        _ORDER = ["O", "E", "S", "C", "L"]
+        if len(lp_dBm) != len(_ORDER):
+            raise ValueError(f"LAUNCH_POWER_DBM list must have {len(_ORDER)} entries (O,E,S,C,L), got {len(lp_dBm)}")
+        lp_dBm = {b: float(p) for b, p in zip(_ORDER, lp_dBm)}
+
     scales = parse_scales(SCALES)
 
     topology_names = _normalize_topology_names(TOPOLOGY)
@@ -338,11 +335,9 @@ if __name__ == "__main__":
     print("=" * 60)
     print(f"Source DB/Collection : {DB}/{COLLECTION}")
     print(f"Topologies           : {topology_names}")
-    print(f"RWA Key              : {rwa_key}")
-    print(f"Band                 : {BAND} -> {band_key} ({band_cfg['name']})")
-    print(f"Active bands         : {band_cfg['bands']}")
+    print(f"Bands                : {band_list}")
     print(f"Channel BW           : {cfm.CH_BW_HZ/1e9:.0f} GHz")
-    print(f"Launch power         : {LAUNCH_POWER_DBM} dBm")
+    print(f"Launch power         : {lp_dBm} dBm")
     print(f"Scales               : {scales}")
     print(f"Save SNR to disk     : {SAVE_SNR_TO_DISK}")
     print("=" * 60)
@@ -364,12 +359,6 @@ if __name__ == "__main__":
     ]
 
     for topo in topology_names:
-        output_csv = str(_SCRIPT_DIR / "data" / f"cfm_scaling_{topo}_{BAND}.csv")
-        print()
-        print("-" * 60)
-        print(f"Topology: {topo!r}  ->  {output_csv}")
-        print("-" * 60)
-
         graph_list = nt.Database.read_topology_dataset_list(
             DB, COLLECTION, find_dic={"name": topo}, node_data=True
         )
@@ -377,62 +366,76 @@ if __name__ == "__main__":
             print(f"[WARN] No topology {topo!r} in {DB}.{COLLECTION}; skip.")
             continue
 
-        rows = []
-        for graph, _id in graph_list:
-            docs = list(nt.Database.read_data(DB, COLLECTION, find_dic={"_id": _id}, max_count=1))
-            if not docs:
-                print(f"[WARN] skip {_id}: source doc not found")
-                continue
-            doc = docs[0]
-            if rwa_key not in doc:
-                raise KeyError(f"Missing RWA key '{rwa_key}' for topology={topo!r}, _id={_id}")
-            rwa_raw = doc[rwa_key]
-            rwa = nt.Tools.read_database_dict(rwa_raw)
+        for band in band_list:
+            band_key = _resolve_band_selection(band)
+            band_cfg = cfm.BAND_CONFIGS[band_key]
+            rwa_key = _build_band_aware_rwa_key(ROUTE_FUNCTION, band)
+            output_csv = str(_SCRIPT_DIR / "data" / f"cfm_scaling_{topo}_{band}.csv")
+            print()
+            print("-" * 60)
+            print(f"Topology: {topo!r}  Band: {band} -> {band_key} ({band_cfg['name']})")
+            print(f"RWA Key: {rwa_key}  ->  {output_csv}")
+            print("-" * 60)
 
-            for scale in scales:
-                t0 = time.perf_counter()
-                graph_scaled = _scale_graph_weights(graph, scale)
-                cap, n_lps = compute_scaled_graph_throughput(
-                    graph=graph_scaled,
-                    rwa=rwa,
-                    band_selection=BAND,
-                    span_length_km=SPAN_LENGTH_KM,
-                    launch_power_dBm=LAUNCH_POWER_DBM,
-                    save_snr_to_disk=SAVE_SNR_TO_DISK,
-                    doc_id=_id,
-                    route_function=ROUTE_FUNCTION,
-                    scale=scale,
-                )
-                dt = time.perf_counter() - t0
-                print(
-                    f"  _id={_id} scale={scale:.2f} -> "
-                    f"{cap/1e12:.4f} Tbps, lightpaths={n_lps}, {dt:.1f}s"
-                )
-                rows.append(
-                    {
-                        "source_id": str(_id),
-                        "topology": topo,
-                        "band_user": BAND,
-                        "band_resolved": band_key,
-                        "route_function": ROUTE_FUNCTION,
-                        "rwa_key": rwa_key,
-                        "scale": float(scale),
-                        "cfm_capacity_bps": float(cap),
-                        "cfm_capacity_tbps": float(cap / 1e12),
-                        "cfm_lightpaths": int(n_lps),
-                        "elapsed_seconds": float(dt),
-                        "span_length_km": float(SPAN_LENGTH_KM),
-                        "launch_power_dBm": float(LAUNCH_POWER_DBM),
-                    }
-                )
+            rows = []
+            for graph, _id in graph_list:
+                docs = list(nt.Database.read_data(DB, COLLECTION, find_dic={"_id": _id}, max_count=1))
+                if not docs:
+                    print(f"[WARN] skip {_id}: source doc not found")
+                    continue
+                doc = docs[0]
+                if rwa_key not in doc:
+                    raise KeyError(f"Missing RWA key '{rwa_key}' for topology={topo!r}, _id={_id}")
+                rwa_raw = doc[rwa_key]
+                rwa = nt.Tools.read_database_dict(rwa_raw)
 
-        if rows:
-            with open(output_csv, "w", newline="", encoding="utf-8") as f:
-                writer = csv.DictWriter(f, fieldnames=fieldnames)
-                writer.writeheader()
-                writer.writerows(rows)
-            print(f"Saved {len(rows)} rows to CSV: {output_csv}")
-        else:
-            print(f"No rows for topology {topo!r}; CSV not written.")
+                for scale in scales:
+                    t0 = time.perf_counter()
+                    graph_scaled = _scale_graph_weights(graph, scale)
+                    cap, n_lps = compute_scaled_graph_throughput(
+                        graph=graph_scaled,
+                        rwa=rwa,
+                        band_selection=band,
+                        span_length_km=SPAN_LENGTH_KM,
+                        launch_power_dBm=lp_dBm,
+                        save_snr_to_disk=SAVE_SNR_TO_DISK,
+                        doc_id=_id,
+                        route_function=ROUTE_FUNCTION,
+                        scale=scale,
+                    )
+                    dt = time.perf_counter() - t0
+                    print(
+                        f"  _id={_id} scale={scale:.2f} -> "
+                        f"{cap/1e12:.4f} Tbps, lightpaths={n_lps}, {dt:.1f}s"
+                    )
+                    rows.append(
+                        {
+                            "source_id": str(_id),
+                            "topology": topo,
+                            "band_user": band,
+                            "band_resolved": band_key,
+                            "route_function": ROUTE_FUNCTION,
+                            "rwa_key": rwa_key,
+                            "scale": float(scale),
+                            "cfm_capacity_bps": float(cap),
+                            "cfm_capacity_tbps": float(cap / 1e12),
+                            "cfm_lightpaths": int(n_lps),
+                            "elapsed_seconds": float(dt),
+                            "span_length_km": float(SPAN_LENGTH_KM),
+                            "launch_power_dBm": (
+                                {b: float(p) for b, p in lp_dBm.items()}
+                                if isinstance(lp_dBm, dict) else float(lp_dBm)
+                            ),
+                        }
+                    )
+
+            if rows:
+                with open(output_csv, "w", newline="", encoding="utf-8") as f:
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(rows)
+                print(f"Saved {len(rows)} rows to CSV: {output_csv}")
+            else:
+                print(f"No rows for topology {topo!r} band {band!r}; CSV not written.")
 
     print("\nDone.")

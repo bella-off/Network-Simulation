@@ -1,0 +1,462 @@
+#
+# There is insufficient memory for the Java Runtime Environment to continue.
+# Native memory allocation (mmap) failed to map 2147483648 bytes. Error detail: committing reserved memory.
+# Possible reasons:
+#   The system is out of physical RAM or swap space
+#   This process has exceeded the maximum number of memory mappings (check below
+#     for `/proc/sys/vm/max_map_count` and `Total number of mappings`)
+#   This process is running with CompressedOops enabled, and the Java Heap may be blocking the growth of the native heap
+# Possible solutions:
+#   Reduce memory load on the system
+#   Increase physical memory or swap space
+#   Check if swap backing store is full
+#   Decrease Java heap size (-Xmx/-Xms)
+#   Decrease number of Java threads
+#   Decrease Java thread stack sizes (-Xss)
+#   Set larger code cache with -XX:ReservedCodeCacheSize=
+#   JVM is running with Zero Based Compressed Oops mode in which the Java heap is
+#     placed in the first 32GB address space. The Java Heap base address is the
+#     maximum limit for the native heap growth. Please use -XX:HeapBaseMinAddress
+#     to set the Java Heap base and to place the Java Heap above 32GB virtual address.
+# This output file may be truncated or incomplete.
+#
+#  Out of Memory Error (os_linux.cpp:2969), pid=3130178, tid=3130179
+#
+# JRE version:  (25.0.2+10) (build )
+# Java VM: OpenJDK 64-Bit Server VM (25.0.2+10-b329.117, mixed mode, sharing, tiered, compressed oops, compressed class ptrs, g1 gc, linux-amd64)
+# Core dump will be written. Default location: Core dumps may be processed with "/usr/lib/systemd/systemd-coredump %P %u %g %s %t %c %h %d %F" (or dumping to /home/uceebd1/pycharm_projects/network_simulations/thesis/throughput_upperbound/simulations/core.3130178)
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: -Dawt.toolkit.name=XToolkit git4idea.http.GitAskPassApp Username for 'https://gitlab.ee.ucl.ac.uk': 
+
+Host: Intel(R) Xeon(R) Gold 6426Y, 64 cores, 502G, Rocky Linux release 9.7 (Blue Onyx)
+Time: Sun Jun 14 12:44:51 2026 BST elapsed time: 0.011695 seconds (0d 0h 0m 0s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00007f106c02c730):  JavaThread "Unknown thread" [_thread_in_vm, id=3130179, stack(0x00007f1073ef9000,0x00007f1073ff9000) (1024K)]
+
+Stack: [0x00007f1073ef9000,0x00007f1073ff9000],  sp=0x00007f1073ff5460,  free space=1009k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+V  [libjvm.so+0x1197074]  VMError::report(outputStream*, bool)+0x32f4  (os_linux.cpp:2969)
+V  [libjvm.so+0x1198d00]  VMError::report_and_die(int, char const*, char const*, __va_list_tag*, Thread*, unsigned char*, void const*, void const*, char const*, int, unsigned long)+0x2c0
+V  [libjvm.so+0x11998bd]
+V  [libjvm.so+0x77d35f]
+V  [libjvm.so+0xe24a08]  os::Linux::commit_memory_impl(char*, unsigned long, bool) [clone .part.0]+0xe8
+V  [libjvm.so+0xe24f92]  os::pd_commit_memory_or_exit(char*, unsigned long, unsigned long, bool, char const*)+0x82
+V  [libjvm.so+0xe1802d]  os::commit_memory_or_exit(char*, unsigned long, unsigned long, bool, char const*)+0x1d
+V  [libjvm.so+0x907f7b]  G1PageBasedVirtualSpace::commit(unsigned long, unsigned long)+0xfb
+V  [libjvm.so+0x91de5f]  G1RegionsLargerThanCommitSizeMapper::commit_regions(unsigned int, unsigned long, WorkerThreads*)+0x9f
+V  [libjvm.so+0x8f2a25]  G1HeapRegionManager::commit_regions(unsigned int, unsigned long, WorkerThreads*)+0x55
+V  [libjvm.so+0x8f45eb]  G1HeapRegionManager::expand(unsigned int, unsigned int, WorkerThreads*)+0x2b
+V  [libjvm.so+0x8f480e]  G1HeapRegionManager::expand_by(unsigned int, WorkerThreads*)+0x7e
+V  [libjvm.so+0x8a7b7e]  G1CollectedHeap::expand(unsigned long, WorkerThreads*, double*)+0xae
+V  [libjvm.so+0x8a8186]  G1CollectedHeap::initialize()+0x596
+V  [libjvm.so+0x113bf0b]  universe_init()+0xeb
+V  [libjvm.so+0x9bfef1]  init_globals()+0x61
+V  [libjvm.so+0x1114a17]  Threads::create_vm(JavaVMInitArgs*, bool*)+0x2c7
+V  [libjvm.so+0xaa388e]  JNI_CreateJavaVM+0x4e
+C  [libjli.so+0x3c4f]  JavaMain+0x8f
+C  [libjli.so+0x7c29]  ThreadJavaMain+0x9
+Lock stack of current Java thread (top to bottom):
+
+
+---------------  P R O C E S S  ---------------
+
+Threads class SMR info:
+_java_thread_list=0x00007f10757e4e00, length=0, elements={
+}
+
+Java Threads: ( => current thread )
+Total: 0
+
+Other Threads:
+  0x00007f106c061620 WorkerThread "GC Thread#0"                     [id=3130181, stack(0x00007f1070441000,0x00007f1070541000) (1024K)]
+  0x00007f106c079780 ConcurrentGCThread "G1 Main Marker"            [id=3130182, stack(0x00007f1070340000,0x00007f1070440000) (1024K)]
+  0x00007f106c07a9c0 WorkerThread "G1 Conc#0"                       [id=3130183, stack(0x00007f107023f000,0x00007f107033f000) (1024K)]
+
+[error occurred during error reporting (printing all threads), id 0xb, SIGSEGV (0xb) at pc=0x00007f107499d77b]
+VM state: not at safepoint (not fully initialized)
+
+VM Mutex/Monitor currently owned by a thread:  ([mutex/lock_event])
+[0x00007f10757be1a8] Heap_lock - owner thread: 0x00007f106c02c730
+
+Heap address: 0x0000000082000000, size: 30688 MB, Compressed Oops mode: Zero based, Oop shift amount: 3
+
+CDS archive(s) mapped at: [0x0000000000000000-0x0000000000000000-0x0000000000000000), size 0, SharedBaseAddress: 0x0000000800000000, ArchiveRelocationMode: 1.
+UseCompressedClassPointers 1, UseCompactObjectHeaders 0
+Narrow klass pointer bits 32, Max shift 3
+Narrow klass base: 0xffffffffffffffff, Narrow klass shift: -1
+Encoding Range: [0xffffffffffffffff - 0x000000007fffffff), (2147483648 bytes)
+Klass Range:    [0x0000000000000000 - 0x0000000000000000), (0 bytes)
+Klass ID Range:  [4294967295 - 0) (1)
+No protection zone.
+
+GC Precious Log:
+ CardTable entry size: 512
+ Card Set container configuration: InlinePtr #cards 3 size 8 Array Of Cards #cards 128 size 272 Howl #buckets 8 coarsen threshold 29491 Howl Bitmap #cards 4096 size 528 coarsen threshold 3686 Card regions per heap region 1 cards per card region 32768
+
+Heap:
+ garbage-first heap   total reserved 31424512K, committed 0K, used 0K [0x0000000082000000, 0x0000000800000000)
+  region size 16384K, 0 young (0K), 0 survivors (0K)
+
+Heap Regions: E=young(eden), S=young(survivor), O=old, HS=humongous(starts), HC=humongous(continues), CS=collection set, F=free, TAMS=top-at-mark-start, PB=parsable bottom
+
+Card table byte_map: [0x00007f1051220000,0x00007f1054e10000] _byte_map_base: 0x00007f1050e10000
+
+Marking Bits: (CMBitMap*) 0x00007f106c062380
+ Bits: [0x00007f10332a0000, 0x00007f1051220000)
+
+GC Heap Usage History (0 events):
+No events
+
+Metaspace Usage History (0 events):
+No events
+
+Dll operation events (1 events):
+Event: 0.007 Loaded shared library /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjava.so
+
+Deoptimization events (0 events):
+No events
+
+Classes loaded (0 events):
+No events
+
+Classes unloaded (0 events):
+No events
+
+Classes redefined (0 events):
+No events
+
+Internal exceptions (0 events):
+No events
+
+VM Operations (0 events):
+No events
+
+Memory protections (1 events):
+Event: 0.006 Protecting memory [0x00007f1073ef9000,0x00007f1073efd000] with protection modes 0
+
+Nmethod flushes (0 events):
+No events
+
+Events (0 events):
+No events
+
+
+Dynamic libraries:
+102000000-800000000 ---p 00000000 00:00 0 
+56538a6b4000-56538a6b5000 r--p 00000000 00:3b 33094009                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/bin/java
+56538a6b5000-56538a6b6000 r-xp 00001000 00:3b 33094009                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/bin/java
+56538a6b6000-56538a6b7000 r--p 00002000 00:3b 33094009                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/bin/java
+56538a6b7000-56538a6b8000 r--p 00002000 00:3b 33094009                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/bin/java
+56538a6b8000-56538a6b9000 rw-p 00003000 00:3b 33094009                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/bin/java
+56538ab58000-56538aba1000 rw-p 00000000 00:00 0                          [heap]
+7f1020000000-7f1020021000 rw-p 00000000 00:00 0 
+7f1020021000-7f1024000000 ---p 00000000 00:00 0 
+7f1024000000-7f1024021000 rw-p 00000000 00:00 0 
+7f1024021000-7f1028000000 ---p 00000000 00:00 0 
+7f102a412000-7f102c021000 rw-p 00000000 00:00 0 
+7f102c021000-7f1030000000 ---p 00000000 00:00 0 
+7f10300ef000-7f1033200000 rw-p 00000000 00:00 0 
+7f10332a0000-7f1058a00000 ---p 00000000 00:00 0 
+7f1058a00000-7f1058c70000 rwxp 00000000 00:00 0 
+7f1058c70000-7f105fdcf000 ---p 00000000 00:00 0 
+7f105fdcf000-7f106003f000 rwxp 00000000 00:00 0 
+7f106003f000-7f106062f000 ---p 00000000 00:00 0 
+7f106062f000-7f106089f000 rwxp 00000000 00:00 0 
+7f106089f000-7f1067a00000 ---p 00000000 00:00 0 
+7f1067ad3000-7f1067bd4000 rw-p 00000000 00:00 0 
+7f1067bd4000-7f106c000000 r--s 00000000 00:3b 33090823                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/modules
+7f106c000000-7f106c198000 rw-p 00000000 00:00 0 
+7f106c198000-7f1070000000 ---p 00000000 00:00 0 
+7f107003c000-7f107023e000 rw-p 00000000 00:00 0 
+7f107023e000-7f107023f000 ---p 00000000 00:00 0 
+7f107023f000-7f107033f000 rw-p 00000000 00:00 0 
+7f107033f000-7f1070340000 ---p 00000000 00:00 0 
+7f1070340000-7f1070440000 rw-p 00000000 00:00 0 
+7f1070440000-7f1070441000 ---p 00000000 00:00 0 
+7f1070441000-7f1070541000 rw-p 00000000 00:00 0 
+7f1070541000-7f1073435000 rw-p 00000000 00:00 0 
+7f1073435000-7f1073518000 ---p 00000000 00:00 0 
+7f1073518000-7f107351d000 rw-p 00000000 00:00 0 
+7f107351d000-7f1073600000 ---p 00000000 00:00 0 
+7f1073600000-7f1073ed4000 r--s 00000000 103:06 55837936                  /var/lib/sss/mc/passwd
+7f1073ef9000-7f1073efd000 ---p 00000000 00:00 0 
+7f1073efd000-7f1073ff9000 rw-p 00000000 00:00 0 
+7f1073ff9000-7f1074006000 r--p 00000000 103:06 8914760                   /usr/lib64/libm.so.6
+7f1074006000-7f1074078000 r-xp 0000d000 103:06 8914760                   /usr/lib64/libm.so.6
+7f1074078000-7f10740d4000 r--p 0007f000 103:06 8914760                   /usr/lib64/libm.so.6
+7f10740d4000-7f10740d5000 r--p 000da000 103:06 8914760                   /usr/lib64/libm.so.6
+7f10740d5000-7f10740d6000 rw-p 000db000 103:06 8914760                   /usr/lib64/libm.so.6
+7f10740d6000-7f10743b2000 r--p 00000000 00:3b 33091260                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/server/libjvm.so
+7f10743b2000-7f1075343000 r-xp 002dc000 00:3b 33091260                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/server/libjvm.so
+7f1075343000-7f107565f000 r--p 0126d000 00:3b 33091260                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/server/libjvm.so
+7f107565f000-7f1075660000 ---p 01589000 00:3b 33091260                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/server/libjvm.so
+7f1075660000-7f1075749000 r--p 01589000 00:3b 33091260                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/server/libjvm.so
+7f1075749000-7f1075774000 rw-p 01672000 00:3b 33091260                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/server/libjvm.so
+7f1075774000-7f1075800000 rw-p 00000000 00:00 0 
+7f1075800000-7f1075829000 r--p 00000000 103:06 8914757                   /usr/lib64/libc.so.6
+7f1075829000-7f107599e000 r-xp 00029000 103:06 8914757                   /usr/lib64/libc.so.6
+7f107599e000-7f10759f7000 r--p 0019e000 103:06 8914757                   /usr/lib64/libc.so.6
+7f10759f7000-7f10759fb000 r--p 001f6000 103:06 8914757                   /usr/lib64/libc.so.6
+7f10759fb000-7f10759fd000 rw-p 001fa000 103:06 8914757                   /usr/lib64/libc.so.6
+7f10759fd000-7f1075a0a000 rw-p 00000000 00:00 0 
+7f1075a66000-7f1075a6b000 rw-p 00000000 00:00 0 
+7f1075a6b000-7f1075a77000 ---p 00000000 00:00 0 
+7f1075a77000-7f1075a83000 r--p 00000000 00:3b 33091235                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjava.so
+7f1075a83000-7f1075a91000 r-xp 0000c000 00:3b 33091235                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjava.so
+7f1075a91000-7f1075a96000 r--p 0001a000 00:3b 33091235                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjava.so
+7f1075a96000-7f1075a97000 ---p 0001f000 00:3b 33091235                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjava.so
+7f1075a97000-7f1075a98000 r--p 0001f000 00:3b 33091235                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjava.so
+7f1075a98000-7f1075a99000 rw-p 00020000 00:3b 33091235                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjava.so
+7f1075a99000-7f1075a9a000 rw-p 00000000 00:00 0 
+7f1075a9a000-7f1075aa2000 rw-s 00000000 103:06 58327067                  /tmp/hsperfdata_uceebd1/3130178
+7f1075aa2000-7f1075aa4000 r--p 00000000 103:06 8994980                   /usr/lib64/libnss_sss.so.2
+7f1075aa4000-7f1075aac000 r-xp 00002000 103:06 8994980                   /usr/lib64/libnss_sss.so.2
+7f1075aac000-7f1075aae000 r--p 0000a000 103:06 8994980                   /usr/lib64/libnss_sss.so.2
+7f1075aae000-7f1075aaf000 r--p 0000b000 103:06 8994980                   /usr/lib64/libnss_sss.so.2
+7f1075aaf000-7f1075ab0000 rw-p 0000c000 103:06 8994980                   /usr/lib64/libnss_sss.so.2
+7f1075ab0000-7f1075ab1000 ---p 00000000 00:00 0 
+7f1075ab1000-7f1075ab2000 r--p 00000000 00:00 0 
+7f1075ab2000-7f1075ab3000 ---p 00000000 00:00 0 
+7f1075ab3000-7f1075ab6000 r--p 00000000 00:3b 33091160                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjimage.so
+7f1075ab6000-7f1075aca000 r-xp 00003000 00:3b 33091160                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjimage.so
+7f1075aca000-7f1075ad0000 r--p 00017000 00:3b 33091160                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjimage.so
+7f1075ad0000-7f1075ad1000 ---p 0001d000 00:3b 33091160                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjimage.so
+7f1075ad1000-7f1075ad3000 r--p 0001d000 00:3b 33091160                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjimage.so
+7f1075ad3000-7f1075ad4000 rw-p 0001f000 00:3b 33091160                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjimage.so
+7f1075ad4000-7f1075ad5000 r--p 00000000 103:06 8914769                   /usr/lib64/librt.so.1
+7f1075ad5000-7f1075ad6000 r-xp 00001000 103:06 8914769                   /usr/lib64/librt.so.1
+7f1075ad6000-7f1075ad7000 r--p 00002000 103:06 8914769                   /usr/lib64/librt.so.1
+7f1075ad7000-7f1075ad8000 r--p 00002000 103:06 8914769                   /usr/lib64/librt.so.1
+7f1075ad8000-7f1075ad9000 rw-p 00003000 103:06 8914769                   /usr/lib64/librt.so.1
+7f1075ad9000-7f1075adc000 rw-p 00000000 00:00 0 
+7f1075adc000-7f1075add000 r--p 00000000 103:06 8914767                   /usr/lib64/libpthread.so.0
+7f1075add000-7f1075ade000 r-xp 00001000 103:06 8914767                   /usr/lib64/libpthread.so.0
+7f1075ade000-7f1075adf000 r--p 00002000 103:06 8914767                   /usr/lib64/libpthread.so.0
+7f1075adf000-7f1075ae0000 r--p 00002000 103:06 8914767                   /usr/lib64/libpthread.so.0
+7f1075ae0000-7f1075ae1000 rw-p 00003000 103:06 8914767                   /usr/lib64/libpthread.so.0
+7f1075ae1000-7f1075ae2000 r--p 00000000 103:06 8914759                   /usr/lib64/libdl.so.2
+7f1075ae2000-7f1075ae3000 r-xp 00001000 103:06 8914759                   /usr/lib64/libdl.so.2
+7f1075ae3000-7f1075ae4000 r--p 00002000 103:06 8914759                   /usr/lib64/libdl.so.2
+7f1075ae4000-7f1075ae5000 r--p 00002000 103:06 8914759                   /usr/lib64/libdl.so.2
+7f1075ae5000-7f1075ae6000 rw-p 00003000 103:06 8914759                   /usr/lib64/libdl.so.2
+7f1075ae6000-7f1075ae9000 r--p 00000000 103:06 8933930                   /usr/lib64/libz.so.1.2.11
+7f1075ae9000-7f1075af7000 r-xp 00003000 103:06 8933930                   /usr/lib64/libz.so.1.2.11
+7f1075af7000-7f1075afd000 r--p 00011000 103:06 8933930                   /usr/lib64/libz.so.1.2.11
+7f1075afd000-7f1075afe000 ---p 00017000 103:06 8933930                   /usr/lib64/libz.so.1.2.11
+7f1075afe000-7f1075aff000 r--p 00017000 103:06 8933930                   /usr/lib64/libz.so.1.2.11
+7f1075aff000-7f1075b02000 rw-p 00000000 00:00 0 
+7f1075b02000-7f1075b04000 r--p 00000000 00:3b 33091380                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjli.so
+7f1075b04000-7f1075b0e000 r-xp 00002000 00:3b 33091380                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjli.so
+7f1075b0e000-7f1075b11000 r--p 0000c000 00:3b 33091380                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjli.so
+7f1075b11000-7f1075b12000 ---p 0000f000 00:3b 33091380                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjli.so
+7f1075b12000-7f1075b13000 r--p 0000f000 00:3b 33091380                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjli.so
+7f1075b13000-7f1075b14000 rw-p 00010000 00:3b 33091380                   /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/jbr/lib/libjli.so
+7f1075b14000-7f1075b16000 rw-p 00000000 00:00 0 
+7f1075b16000-7f1075b18000 r--p 00000000 103:06 8914753                   /usr/lib64/ld-linux-x86-64.so.2
+7f1075b18000-7f1075b41000 r-xp 00002000 103:06 8914753                   /usr/lib64/ld-linux-x86-64.so.2
+7f1075b41000-7f1075b4d000 r--p 0002b000 103:06 8914753                   /usr/lib64/ld-linux-x86-64.so.2
+7f1075b4d000-7f1075b4f000 r--p 00037000 103:06 8914753                   /usr/lib64/ld-linux-x86-64.so.2
+7f1075b4f000-7f1075b51000 rw-p 00039000 103:06 8914753                   /usr/lib64/ld-linux-x86-64.so.2
+7ffe76589000-7ffe765b1000 rw-p 00000000 00:00 0                          [stack]
+7ffe765d2000-7ffe765d6000 r--p 00000000 00:00 0                          [vvar]
+7ffe765d6000-7ffe765d8000 r-xp 00000000 00:00 0                          [vdso]
+ffffffffff600000-ffffffffff601000 --xp 00000000 00:00 0                  [vsyscall]
+Total number of mappings: 119
+
+JVMTI agents: none
+
+
+VM Arguments:
+jvm_args: -Dawt.toolkit.name=XToolkit 
+java_command: git4idea.http.GitAskPassApp Username for 'https://gitlab.ee.ucl.ac.uk': 
+java_class_path (initial): /home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/plugins/vcs-git/lib/git4idea-rt.jar:/home/uceebd1/.local/share/JetBrains/Toolbox/apps/pycharm/lib/externalProcess-rt.jar
+Launcher Type: SUN_STANDARD
+
+[Global flags]
+     intx CICompilerCount                          = 18                                        {product} {ergonomic}
+     uint ConcGCThreads                            = 11                                        {product} {ergonomic}
+     uint G1ConcRefinementThreads                  = 43                                        {product} {ergonomic}
+   size_t G1HeapRegionSize                         = 16777216                                  {product} {ergonomic}
+   size_t InitialHeapSize                          = 2147483648                                {product} {ergonomic}
+   size_t MarkStackSize                            = 4194304                                   {product} {ergonomic}
+   size_t MarkStackSizeMax                         = 536870912                                 {product} {ergonomic}
+   size_t MaxHeapSize                              = 32178700288                               {product} {ergonomic}
+   size_t MinHeapDeltaBytes                        = 16777216                                  {product} {ergonomic}
+   size_t MinHeapSize                              = 16777216                                  {product} {ergonomic}
+    uintx NonNMethodCodeHeapSize                   = 8781824                                {pd product} {ergonomic}
+    uintx NonProfiledCodeHeapSize                  = 121442304                              {pd product} {ergonomic}
+    uintx ProfiledCodeHeapSize                     = 121434112                              {pd product} {ergonomic}
+    uintx ReservedCodeCacheSize                    = 251658240                              {pd product} {ergonomic}
+     bool SegmentedCodeCache                       = true                                      {product} {ergonomic}
+   size_t SoftMaxHeapSize                          = 32178700288                            {manageable} {ergonomic}
+     bool UseCompressedOops                        = true                           {product lp64_product} {ergonomic}
+     bool UseG1GC                                  = true                                      {product} {ergonomic}
+
+Logging:
+Log output configuration:
+ #0: stdout all=warning uptime,level,tags foldmultilines=false
+ #1: stderr all=off uptime,level,tags foldmultilines=false
+
+Release file:
+<release file has not been read>
+Environment Variables:
+CLASSPATH=/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/aalto-xml-1.3.4.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/aalto-xml.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/accounts-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/accounts-enterprise.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/accounts-google.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/accounts-jba.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/accounts.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/agent-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/agent-network-api-utils.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/agent-network-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/agent-network-mappers.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/agent.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/annotations-26.0.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ap-validation-85.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/app-keychain.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/app-logger-0.7.5035.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/app-logger-tinylog.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/app-network-0.7.5035.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/app-oauth.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/app-os-0.7.5035.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/app-os-win.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/app-ssh-0.7.5035.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/base.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/bazel-runfiles.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/bcpkix-jdk18on-1.80.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/bcprov-jdk18on-1.80.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/bcutil-jdk18on-1.80.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/bifurcan.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/buffer.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/caffeine-3.1.8.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/caffeine.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/checker-qual-3.42.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/cli-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/cli.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/codec.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/common.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/commons-codec-1.21.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/commons-compress-1.28.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/commons-configuration2-2.13.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/commons-io-2.21.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/commons-lang3-3.20.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/commons-logging-1.3.5.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/commons-text-1.14.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/compress.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/config-1.4.5.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/coroutines.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/daemon-openssh.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/daemon-shared-0.7.5035.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/dbus-java-core-4.0.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/dbus-java-transport-native-unixsocket-4.0.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/debug.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/delight-rhino-sandbox-0.2.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/desktop.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/diagnostic.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/disk-usage-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/disk-usage.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/dot-desktop-files.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/eel-nioFs.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/eel.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/enterprise-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/enterprise.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/environment-descriptor-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/environment-descriptor.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/error_prone_annotations-2.26.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ex-coroutines-0.7.5035.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ex-rhizome.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ex-serialization-json.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ex-serialization.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ex-stdlib.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/feed-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/feed.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/feedjet-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/file-associations-windows-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/file-associations-windows.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/fleet-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/fleet-core.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/fleet-fastutil.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/fleet-reporting-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/fleet-rpc.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/fleet-util-core.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/fleet-util-logging-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/fus.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/gateway-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/gateway-error-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/gateway-internal-plugin-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/gateway-remote-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/h2-mvstore-2.4.240.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/i18n.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/id-generation-85.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/install-commands.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/intellij-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/intellij-deps-fastutil-8.5.18-jb1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/intellij.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/interop-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/interop.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/io.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ipc.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jackson-annotations-2.19.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jackson-core-2.19.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jackson-databind-2.19.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jackson-module-kotlin-2.19.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jaxen-1.2.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jbclient-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jbr-api-1.9.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jbr.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jcip-annotations-1.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jcip.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jdom-2.0.6.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jna-platform-5.17.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jna_without_native.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/json.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jspecify-1.0.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/jvm-native-trusted-roots-1.1.7.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kernel.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/keychain.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/koin-core-jvm-4.1.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlin-logging-jvm-7.0.13.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlin-reflect-2.3.21-RC2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlin-stdlib-2.3.21-RC2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlin-stdlib-jdk7-2.3.21-RC2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlin-stdlib-jdk8-2.3.21-RC2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-collections-immutable-jvm-0.4.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-coroutines-core-jvm-1.10.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-coroutines-debug-1.10.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-coroutines-slf4j-1.10.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-datetime-jvm-0.6.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-io-bytestring-jvm-0.8.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-io-core-jvm-0.8.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-rpc-core-jvm-0.10.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-rpc-krpc-client-jvm-0.10.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-rpc-krpc-core-jvm-0.10.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-rpc-krpc-logging-jvm-0.10.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-rpc-krpc-serialization-core-jvm-0.10.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-rpc-krpc-serialization-json-jvm-0.10.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-rpc-krpc-server-jvm-0.10.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-rpc-utils-jvm-0.10.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-serialization-core-jvm-1.9.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-serialization-json-jvm-1.9.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/kotlinx-serialization-json-okio-jvm-1.9.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-client-cio-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-client-core-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-events-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-http-cio-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-http-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-io-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-network-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-network-tls-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-serialization-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-server-cio-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-server-core-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-sse-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-utils-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-websocket-serialization-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ktor-websockets-jvm-3.4.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/lang3.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/libraries-fastutil.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/libraries-kotlinx-collections-immutable.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/libraries-kotlinx-coroutines-core.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/libraries-kotlinx-serialization-core.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/libraries-netty-codec-http.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/license.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/licensing-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/log4j-over-slf4j-1.7.36.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/logging-bootstrap.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/lz4.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/model-85.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/multiplatform.shims.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/mvstore.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/netty-buffer-4.2.9.Final.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/netty-codec-base-4.2.9.Final.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/netty-codec-compression-4.2.9.Final.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/netty-codec-http-4.2.9.Final.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/netty-codec-http2-4.2.9.Final.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/netty-common-4.2.9.Final.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/netty-handler-4.2.9.Final.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/netty-resolver-4.2.9.Final.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/netty-transport-4.2.9.Final.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/netty-transport-native-unix-common-4.2.9.Final.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/network-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/network.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/observability.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/okhttp-4.12.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/okhttp-tls-4.12.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/okio-3.9.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/okio-jvm-3.9.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-api-1.61.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-common-1.61.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-context-1.61.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-exporter-common-1.61.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-exporter-otlp-1.61.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-exporter-otlp-common-1.61.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-exporter-sender-ktor.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-extension-kotlin-1.61.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-sdk-1.61.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-sdk-common-1.61.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-sdk-extension-autoconfigure-spi-1.61.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-sdk-logs-1.61.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-sdk-metrics-1.61.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/opentelemetry-sdk-trace-1.61.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/oro-2.0.8.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/oro-matcher.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/package-extractor-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/package-extractors.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/picocli-4.7.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-actions.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-background-task-scheduler-impl.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-background-task-scheduler-koin.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-background-task-scheduler.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-build-number.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-image.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-images.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-koin.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-logging.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-mime.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-notifications.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-oauth.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-os-koin.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-os-linux.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-os-mac.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-os-process.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-os-unix.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-os-win.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-paths.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-resource.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-tools.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-util-base-multiplatform.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-util-multiplatform.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-workspace-air.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-workspace-koin.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-workspace-visual-studio.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/platform-workspace.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/plugin-api-core.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/plugin-api-localization.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/plugin-api-remote-dev.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/plugin-api-ui.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/project-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/project-fleet.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/project-intellij.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/project-visualstudio.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/project.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/protocolhandler-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/proxy-vole-1.1.8.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/reflect.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/registration-windows.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/remote-development-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/remote-development.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/resharper-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/resharper.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/rhino-1.7.15.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/rhino-engine-1.7.15.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/rhizome.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/rhizomedb.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/rhizomedb.transactor.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/rhizomedb.transactor.rebase.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/rpc-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/rpc-compatibility.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/rt-java8.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/scheme-85.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/serialization-kotlin-85.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/serialization.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/settings-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/settings.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/shared.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/shell-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/shell.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/shortcuts-windows-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/shortcuts-windows.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/slf4j-api-2.0.17.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/slf4j-tinylog-2.6.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/snap.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/stately-concurrency-jvm-2.1.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/stately-concurrent-collections-jvm-2.1.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/stately-strict-jvm-2.1.0.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/station-comms-common.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/station-comms-services.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/station-comms.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/stax2-api-4.2.2.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/tbe-config-machine-2024.5.0.1988.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/tbe-test-access-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/telemetry-impl.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/tinylog-api-2.6.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/tinylog-api-kotlin-2.6.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/tinylog-impl-2.6.1.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/toolbox-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/toolbox-core.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/toolbox-feature-rpc.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/toolbox-product-intellij-tools.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/toolbox-tools.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/tools-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ui-theme-api.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/ui-theme.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/util-classLoader.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/util-ex.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/util-rt.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/util.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/vscode-enterprise.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/vscode.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/windows.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/wintools.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/workspaces.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/xmlDom.jar:/home/uceebd1/.cache/JetBrains/Toolbox-CLI-dist/tbcli-3.5.0.84344/lib/xz-1.9.jar
+PATH=/usr/libexec/git-core:/usr/libexec/git-core:/home/uceebd1/pycharm_projects/network_simulations/.venv/bin:/apps/cuda/cuda-13.0/bin:/usr/local/bin:/usr/java/latest/bin:/usr/share/Modules/bin:/apps/cuda/cuda-13.0/bin:/home/uceebd1/.local/bin:/usr/local/bin:/usr/java/latest/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/usr/bin:/bin:/apps/cuda/bin:.::/apps/android/tools:/usr/bin:/bin:/apps/cuda/bin:.::/apps/android/tools
+LD_LIBRARY_PATH=/apps/cuda/cuda-13.0/lib64:/apps/cuda/cuda-13.0/extras/CUPTI/lib64:/apps/cuda/cudnn-linux-x86_64-9.14.0.64_cuda13/lib:/lib64:/lib:/usr/local/lib:/usr/local/lib64:/usr/lib64:/usr/lib:/apps/cuda/lib64:/apps/cuda/lib
+SHELL=/bin/bash
+DISPLAY=:0.0
+LC_ALL=en_US.UTF-8
+
+Active Locale:
+LC_ALL=C
+LC_COLLATE=C
+LC_CTYPE=C
+LC_MESSAGES=C
+LC_MONETARY=C
+LC_NUMERIC=C
+LC_TIME=C
+
+Signal Handlers:
+   SIGSEGV: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+    SIGBUS: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+    SIGFPE: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+   SIGPIPE: javaSignalHandler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, blocked
+   SIGXFSZ: javaSignalHandler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, blocked
+    SIGILL: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+   SIGUSR2: SR_handler in libjvm.so, mask=00000000000000000000000000000000, flags=SA_RESTART|SA_SIGINFO, blocked
+    SIGHUP: SIG_DFL, mask=00000000000000000000000000000000, flags=none, blocked
+    SIGINT: SIG_DFL, mask=00000000000000000000000000000000, flags=none, blocked
+   SIGTERM: SIG_DFL, mask=00000000000000000000000000000000, flags=none, blocked
+   SIGQUIT: UserHandler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, blocked
+   SIGTRAP: crash_handler in libjvm.so, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+
+
+Compilation memory statistics disabled.
+
+Periodic native trim disabled
+
+JNI global refs:
+JNI global refs: 0, weak refs: 0
+
+JNI global refs memory usage: 0, weak refs: 0
+
+Process memory usage:
+Resident Set Size: 24028K (0% of 527326696K total physical memory with 474372892K free physical memory)
+
+OOME stack traces (most recent first):
+Classloader memory used:
+
+---------------  S Y S T E M  ---------------
+
+OS:
+Rocky Linux release 9.7 (Blue Onyx)
+uname: Linux 5.14.0-611.55.1.el9_7.0.3.x86_64 #1 SMP PREEMPT_DYNAMIC Mon May 18 19:21:10 UTC 2026 x86_64
+OS uptime: 16 days 22:22 hours
+libc: glibc 2.34 NPTL 2.34 
+rlimit (soft/hard): STACK 8192k/infinity , CORE infinity/infinity , NPROC 65535/65535 , NOFILE 65535/65535 , AS infinity/infinity , CPU infinity/infinity , DATA infinity/infinity , FSIZE infinity/infinity , MEMLOCK 8192k/8192k
+load average: 6.62 7.16 7.20
+
+/proc/meminfo:
+MemTotal:       527326696 kB
+MemFree:         2170748 kB
+MemAvailable:   474372388 kB
+Buffers:         1075500 kB
+Cached:         445764612 kB
+SwapCached:        63536 kB
+Active:         120579536 kB
+Inactive:       363012012 kB
+Active(anon):   26783932 kB
+Inactive(anon): 10203584 kB
+Active(file):   93795604 kB
+Inactive(file): 352808428 kB
+Unevictable:        7356 kB
+Mlocked:            1196 kB
+SwapTotal:      32767996 kB
+SwapFree:       26859772 kB
+Zswap:                 0 kB
+Zswapped:              0 kB
+Dirty:               524 kB
+Writeback:             0 kB
+AnonPages:      36672568 kB
+Mapped:         10072692 kB
+Shmem:            236448 kB
+KReclaimable:   30105868 kB
+Slab:           32226180 kB
+SReclaimable:   30105868 kB
+SUnreclaim:      2120312 kB
+KernelStack:      135392 kB
+PageTables:       406344 kB
+SecPageTables:     14448 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    454629352 kB
+Committed_AS:   453355068 kB
+VmallocTotal:   13743895347199 kB
+VmallocUsed:      613760 kB
+VmallocChunk:          0 kB
+Percpu:            84224 kB
+HardwareCorrupted:     0 kB
+AnonHugePages:  18223104 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:              0 kB
+CmaFree:               0 kB
+Unaccepted:            0 kB
+HugePages_Total:       0
+HugePages_Free:        0
+HugePages_Rsvd:        0
+HugePages_Surp:        0
+Hugepagesize:       2048 kB
+Hugetlb:               0 kB
+DirectMap4k:    33757180 kB
+DirectMap2M:    407195648 kB
+DirectMap1G:    97517568 kB
+
+/sys/kernel/mm/transparent_hugepage/enabled: [always] madvise never
+/sys/kernel/mm/transparent_hugepage/hpage_pmd_size: 2097152
+/sys/kernel/mm/transparent_hugepage/shmem_enabled: always within_size advise [never] deny force
+/sys/kernel/mm/transparent_hugepage/defrag (defrag/compaction efforts parameter): always defer defer+madvise [madvise] never
+
+Process Memory:
+Virtual Size: 30691952K (peak: 32784148K)
+Resident Set Size: 24032K (peak: 24032K) (anon: 9684K, file: 14348K, shmem: 0K)
+Swapped out: 0K
+C-Heap outstanding allocations: 96564K, retained: 559K
+glibc malloc tunables: (default)
+
+/proc/sys/kernel/threads-max (system-wide limit on the number of threads): 4119084
+/proc/sys/vm/max_map_count (maximum number of memory map areas a process may have): 65530
+/proc/sys/vm/swappiness (control to define how aggressively the kernel swaps out anonymous memory): 60
+/proc/sys/kernel/pid_max (system-wide limit on number of process identifiers): 4194304
+
+container information not found.
+Steal ticks since vm start: 0
+Steal ticks percentage since vm start:  0.000
+
+CPU: total 64 (initial active 64) (16 cores per cpu, 2 threads per core) family 6 model 143 stepping 8 microcode 0x2b000661, cx8, cmov, fxsr, ht, mmx, 3dnowpref, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, lzcnt, tsc, tscinvbit, avx, avx2, aes, erms, clmul, bmi1, bmi2, adx, avx512f, avx512dq, avx512cd, avx512bw, avx512vl, sha, fma, vzeroupper, avx512_vpopcntdq, avx512_vpclmulqdq, avx512_vaes, avx512_vnni, clflush, clflushopt, clwb, avx512_vbmi2, avx512_vbmi, serialize, rdtscp, rdpid, fsrm, gfni, avx512_bitalg, f16c, pku, ospke, cet_ibt, cet_ss, avx512_ifma, avx512_fp16
+CPU Model and flags from /proc/cpuinfo:
+model name	: Intel(R) Xeon(R) Gold 6426Y
+flags		: fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush dts acpi mmx fxsr sse sse2 ss ht tm pbe syscall nx pdpe1gb rdtscp lm constant_tsc art arch_perfmon pebs bts rep_good nopl xtopology nonstop_tsc cpuid aperfmperf tsc_known_freq pni pclmulqdq dtes64 monitor ds_cpl vmx smx est tm2 ssse3 sdbg fma cx16 xtpr pdcm pcid dca sse4_1 sse4_2 x2apic movbe popcnt tsc_deadline_timer aes xsave avx f16c rdrand lahf_lm abm 3dnowprefetch cpuid_fault epb cat_l3 cat_l2 cdp_l3 cdp_l2 ssbd mba ibrs ibpb stibp ibrs_enhanced tpr_shadow flexpriority ept vpid ept_ad fsgsbase tsc_adjust bmi1 avx2 smep bmi2 erms invpcid cqm rdt_a avx512f avx512dq rdseed adx smap avx512ifma clflushopt clwb intel_pt avx512cd sha_ni avx512bw avx512vl xsaveopt xsavec xgetbv1 xsaves cqm_llc cqm_occup_llc cqm_mbm_total cqm_mbm_local split_lock_detect user_shstk avx_vnni avx512_bf16 wbnoinvd dtherm ida arat pln pts hfi vnmi avx512vbmi umip pku ospke waitpkg avx512_vbmi2 gfni vaes vpclmulqdq avx512_vnni avx512_bitalg tme avx512_vpopcntdq la57 rdpid bus_lock_detect cldemote movdiri movdir64b enqcmd fsrm md_clear serialize tsxldtrk pconfig arch_lbr ibt amx_bf16 avx512_fp16 amx_tile amx_int8 flush_l1d arch_capabilities
+
+Online cpus: 0-63
+Offline cpus: 
+BIOS frequency limitation: <Not Available>
+Frequency switch latency (ns): <Not Available>
+Available cpu frequencies: <Not Available>
+Current governor: <Not Available>
+Core performance/turbo boost: <Not Available>
+
+Memory: 4k page, physical 527326696k(474372388k free), swap 32767996k(26859772k free)
+Page Sizes: 4k
+
+vm_info: OpenJDK 64-Bit Server VM (25.0.2+10-b329.117) for linux-amd64 JRE (25.0.2+10-b329.117), built on 2026-04-20 with gcc 10.3.1 20210422 (Red Hat 10.3.1-1.2.0.1)
+
+END.

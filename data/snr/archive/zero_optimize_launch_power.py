@@ -1,46 +1,8 @@
-"""
-Per-band launch power sweep on a point-to-point link (Stage 1 + optional joint).
 
-**Configure runs** by editing the ``USER CONFIGURATION`` block in
-``if __name__ == "__main__":`` at the bottom of this file.
-
-**``other_bands_mode``**
-
-* ``isolated`` — only the swept band has ``mask=1`` in ``calc_NSR_link``; other
-  bands use ``mask=0``.
-* ``default_power`` — like ``optimize_launch_power.py``: all ``mask=1``;
-  non-swept bands at ``default_power_dBm`` while the swept band's power varies.
-
-**``snr_metric``**: ``mean_linear_dB`` or ``mean_dB``.
-
-Stage 2 (optional): L-BFGS-B on **fully loaded** link when ``skip_joint`` is False.
-"""
 from __future__ import annotations
 
+
 import os
-import ctypes
-
-cuda_lib = "/apps/cuda/cuda-13.0/lib64/libcudart.so.13"
-cupti_lib = "/apps/cuda/cuda-13.0/extras/CUPTI/lib64/libcupti.so.13"
-cudnn_lib = "/apps/cuda/cudnn-linux-x86_64-9.14.0.64_cuda13/lib/libcudnn.so.9"
-
-try:
-    ctypes.CDLL(cuda_lib)
-    ctypes.CDLL(cupti_lib)
-    ctypes.CDLL(cudnn_lib)
-except Exception as e:
-    print(f"CUDA check: {e}")
-
-os.environ["XLA_FLAGS"] = (
-    "--xla_gpu_cuda_data_dir=/apps/cuda/cuda-13.0"
-    " --xla_gpu_deterministic_ops=true"
-)
-
-import jax
-
-print(f"GPU count: {jax.device_count()}")
-print(f"Devices: {jax.devices()}")
-
 import csv
 import pathlib
 import sys
@@ -62,7 +24,7 @@ for p in (_EXTERNAL_DIR, str(_ONG_SRC)):
     if p not in sys.path:
         sys.path.insert(0, p)
 
-import compute_throughput_cfm as cfm
+import compute_throughput_cfm_new as cfm
 
 ALL_BANDS = ["O", "E", "S", "C", "L"]
 
@@ -85,6 +47,7 @@ def _build_per_channel_params_perband(ch_lambda, band_masks, active_bands,
         mask = band_masks[b]
         P_channel = P_channel.at[mask].set(band_power_dBm[b])
         nf = nf.at[mask].set(cfm.BANDS[b]['noise_figure'])
+        # origin numpy: nf[mask]=cfm.BANDS[b]['noise_figure']
         snr_trx = snr_trx.at[mask].set(cfm.BANDS[b]['TransceiverSNR'])
 
     return P_channel, nf, snr_trx
